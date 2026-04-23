@@ -47,6 +47,7 @@ UDT_TAG_FIELDS = {
     "value":         "value",
     "enghigh":       "engHigh",
     "englow":        "engLow",
+    "engunit":       "engUnit",
     "documentation": "documentation",
 }
 
@@ -56,7 +57,10 @@ UDT_TAG_FIELDS = {
 #
 #   DocBinding    — Boolean.  When true, the Documentation value is written as
 #                   {"bindType": "parameter", "binding": <value>} instead of a
-#                   plain string.  ParamBinding does the same for OpcPath.
+#                   plain string.  OPCPathBinding does the same for OpcPath.
+#                   EngUnitBinding does the same for EngUnit.
+#                   TODO: consider generalising binding support to other string
+#                   fields (tooltip, etc.) in a future pass.
 #                   TODO: consider generalising binding support to other string
 #                   fields (tooltip, etc.) in a future pass.
 #

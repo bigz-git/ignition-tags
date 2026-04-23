@@ -367,7 +367,6 @@ def build_udt_types(
                     tag["readOnly"] = True
 
             # Documentation with optional parameter binding
-            # TODO: consider generalising binding support to other string fields
             if "docbinding" in df_cols and "documentation" in tag:
                 doc_bind = row.get("docbinding", "")
                 if doc_bind is True or str(doc_bind).strip().lower() in ("true", "1", "yes"):
@@ -376,10 +375,19 @@ def build_udt_types(
                         "binding": tag["documentation"],
                     }
 
+            # EngUnit with optional parameter binding
+            if "engunitbinding" in df_cols and "engUnit" in tag:
+                eu_bind = row.get("engunitbinding", "")
+                if eu_bind is True or str(eu_bind).strip().lower() in ("true", "1", "yes"):
+                    tag["engUnit"] = {
+                        "bindType": "parameter",
+                        "binding": tag["engUnit"],
+                    }
+
             # OPC path with optional parameter binding
             opc = str(row.get("opcpath", "")).strip() if "opcpath" in df_cols else ""
             if opc:
-                param_binding = row.get("parambinding", "") if "parambinding" in df_cols else ""
+                param_binding = row.get("opcpathbinding", "") if "opcpathbinding" in df_cols else ""
                 use_binding = (
                     param_binding is True
                     or str(param_binding).strip().lower() in ("true", "1", "yes")
