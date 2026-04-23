@@ -9,6 +9,7 @@ files and passing data in; these functions only do the conversion work.
 import json
 import logging
 import numbers
+import re
 
 import pandas as pd
 
@@ -136,6 +137,35 @@ def _try_numeric(val):
         return float(val)
     except (ValueError, TypeError):
         return val
+
+
+def _extract_udt_parameters(first_row, df_cols: set) -> dict:
+    """
+    Build the UdtType 'parameters' dict from param{N}_name/datatype/value columns.
+
+    Columns are discovered by scanning df_cols for names matching param{N}_name
+    (N = 1, 2, …).  Values are read from first_row (the first tag row of the
+    UDT group).  The Value column is optional — omitted when blank.
+    """
+    param_nums = sorted(
+        int(m.group(1))
+        for col in df_cols
+        if (m := re.match(r"^param(\d+)_name$", col))
+    )
+    params = {}
+    for n in param_nums:
+        param_name = str(first_row.get(f"param{n}_name", "")).strip()
+        if not param_name:
+            continue
+        param: dict = {}
+        dt = str(first_row.get(f"param{n}_datatype", "")).strip()
+        if dt:
+            param["dataType"] = dt
+        v = first_row.get(f"param{n}_value", "")
+        if v != "" and not (isinstance(v, float) and pd.isna(v)):
+            param["value"] = str(v).strip()
+        params[param_name] = param
+    return params
 
 
 def _apply_udt_field(tag: dict, excel_col: str, json_key: str, val) -> None:
@@ -277,6 +307,7 @@ def build_udt_types(
     df: pd.DataFrame,
     top_types_name: str = "_types_",
     root_format: str = "folder_root",
+    opc_server: str = "Ignition OPC UA Server",
 ) -> dict:
     """
     Convert a udtImport DataFrame into an Ignition UDT JSON dict.
@@ -289,6 +320,7 @@ def build_udt_types(
                       "folder_root"  -> {name, tagType: Folder, tags: [...]}
                       "wrapped_tags" -> {tags: [{name, tagType: Folder, tags: [...]}]}
                       "tags_only"    -> {tags: [...]}
+    opc_server:     OPC server name written into opcServer for OPC-connected tags.
     """
     df = _norm_df(df)
     df_cols = set(df.columns)
@@ -302,7 +334,13 @@ def build_udt_types(
         if not udt_name:
             continue
 
-        udt: dict = {"name": udt_name, "typeId": "", "tagType": "UdtType", "tags": []}
+        udt: dict = {"name": udt_name, "tagType": "UdtType", "tags": []}
+
+        # Build parameters block from param{N}_* columns on the first tag row
+        first_row = group.iloc[0]
+        params = _extract_udt_parameters(first_row, df_cols)
+        if params:
+            udt["parameters"] = params
 
         for _, row in group.iterrows():
             tag_name = str(row.get("tagname", "")).strip()
@@ -322,6 +360,22 @@ def build_udt_types(
 
             tag.setdefault("valueSource", "memory")
 
+            # ReadOnly boolean
+            if "readonly" in df_cols:
+                ro = row.get("readonly", "")
+                if ro is True or str(ro).strip().lower() in ("true", "1", "yes"):
+                    tag["readOnly"] = True
+
+            # Documentation with optional parameter binding
+            # TODO: consider generalising binding support to other string fields
+            if "docbinding" in df_cols and "documentation" in tag:
+                doc_bind = row.get("docbinding", "")
+                if doc_bind is True or str(doc_bind).strip().lower() in ("true", "1", "yes"):
+                    tag["documentation"] = {
+                        "bindType": "parameter",
+                        "binding": tag["documentation"],
+                    }
+
             # OPC path with optional parameter binding
             opc = str(row.get("opcpath", "")).strip() if "opcpath" in df_cols else ""
             if opc:
@@ -333,6 +387,8 @@ def build_udt_types(
                 tag["opcItemPath"] = (
                     {"bindType": "parameter", "binding": opc} if use_binding else opc
                 )
+                tag["valueSource"] = "opc"
+                tag["opcServer"] = opc_server
 
             udt["tags"].append(tag)
 

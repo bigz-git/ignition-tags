@@ -53,7 +53,12 @@ def cmd_json_to_excel(args: argparse.Namespace) -> None:
 def cmd_excel_to_udt(args: argparse.Namespace) -> None:
     """Excel udtImport sheet -> Ignition UDT JSON."""
     df = pd.read_excel(args.input, sheet_name=UDT_IMPORT_SHEET)
-    result = build_udt_types(df, top_types_name=args.top_name, root_format=args.format)
+    result = build_udt_types(
+        df,
+        top_types_name=args.top_name,
+        root_format=args.format,
+        opc_server=args.opc_server,
+    )
     _write_json(result, args.output)
     print(f"Wrote {args.output}")
 
@@ -123,6 +128,13 @@ def build_parser() -> argparse.ArgumentParser:
         default="folder_root",
         choices=["folder_root", "wrapped_tags", "tags_only"],
         help="Root structure format (default: folder_root)",
+    )
+    p.add_argument(
+        "--opc-server",
+        default="Ignition OPC UA Server",
+        dest="opc_server",
+        metavar="NAME",
+        help='OPC server name for OPC-connected UDT tags (default: "Ignition OPC UA Server")',
     )
     p.set_defaults(func=cmd_excel_to_udt)
 

@@ -49,3 +49,18 @@ UDT_TAG_FIELDS = {
     "englow":        "engLow",
     "documentation": "documentation",
 }
+
+# Special udtImport columns handled outside the generic UDT_TAG_FIELDS loop:
+#
+#   ReadOnly      — Boolean (true/false/1/0).  Written as a JSON boolean on the tag.
+#
+#   DocBinding    — Boolean.  When true, the Documentation value is written as
+#                   {"bindType": "parameter", "binding": <value>} instead of a
+#                   plain string.  ParamBinding does the same for OpcPath.
+#                   TODO: consider generalising binding support to other string
+#                   fields (tooltip, etc.) in a future pass.
+#
+#   Param{N}_Name      — Name of UDT parameter N (N = 1, 2, 3, …).  Read from
+#   Param{N}_DataType    the first tag row of each UDT group and used to build
+#   Param{N}_Value       the top-level "parameters" block on the UdtType object.
+#                        Value column is optional (no default → omit the key).
