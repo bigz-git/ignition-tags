@@ -29,12 +29,13 @@ TAG_ENG_FIELDS = {
 
 # Alarm sub-object fields.  All of these are grouped under tag["alarms"][0].
 TAG_ALARM_FIELDS = {
-    "alarmname":     "name",
-    "alarmlabel":    "label",
-    "alarmmode":     "mode",
-    "alarmsetpoint": "setpointA",   # coerced to float when possible
-    "alarmpriority": "priority",
-    "alarmnotes":    "notes",
+    "alarmname":        "name",
+    "alarmlabel":       "label",
+    "alarmmode":        "mode",
+    "alarmsetpoint":    "setpointA",   # coerced to float when possible
+    "alarmpriority":    "priority",
+    "alarmnotes":       "notes",
+    "alarmdisplaypath": "displayPath",
 }
 
 # ── udtImport columns ─────────────────────────────────────────────────────────

@@ -499,6 +499,29 @@ def build_udt_types(
                         "binding": tag["engUnit"],
                     }
 
+            # Alarm sub-object — only created when alarmname is populated
+            alarm_name_val = str(tag_row.get("alarmname", "")).strip()
+            if "alarmname" in tag_cols and alarm_name_val and alarm_name_val.lower() != "nan":
+                alarm: dict = {}
+                for excel_col, json_key in TAG_ALARM_FIELDS.items():
+                    if excel_col not in tag_cols:
+                        continue
+                    val = tag_row.get(excel_col, "")
+                    if val == "" or (isinstance(val, float) and pd.isna(val)):
+                        continue
+                    if json_key == "setpointA":
+                        try:
+                            val = float(val)
+                        except (ValueError, TypeError):
+                            pass
+                    else:
+                        val = str(val).strip()
+                        if not val or val.lower() == "nan":
+                            continue
+                    alarm[json_key] = val
+                if alarm:
+                    tag["alarms"] = [alarm]
+
             # OPC path with optional parameter binding
             opc = str(tag_row.get("opcpath", "")).strip() if "opcpath" in tag_cols else ""
             if opc and opc.lower() != "nan":
