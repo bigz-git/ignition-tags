@@ -356,6 +356,9 @@ def build_tag_provider(df: pd.DataFrame, provider_name: str, opc_server: str) ->
     return {"tagType": "Provider", "name": provider_name, "tags": top_level_tags}
 
 
+_PARAM_DATATYPES = {"integer", "float", "string"}
+
+
 def _validate_udt_block(block: dict, udt_name: str) -> None:
     """
     Log warnings for structural issues in a single parsed UDT block.
@@ -367,19 +370,30 @@ def _validate_udt_block(block: dict, udt_name: str) -> None:
     udt_row = block["udt"]
     udt_cols = set(udt_row.keys())
 
-    # Param columns present but name cell is blank
     param_nums = sorted(
         int(m.group(1))
         for col in udt_cols
         if (m := re.match(r"^param(\d+)_name$", col))
     )
     for n in param_nums:
+        # Param columns present but name cell is blank
         param_name = str(udt_row.get(f"param{n}_name", "")).strip()
         if not param_name or param_name.lower() == "nan":
             logger.warning(
                 "UDT '%s': Param%d_Name is empty — parameter %d will be skipped",
                 udt_name, n, n,
             )
+            continue
+
+        # DataType must be Integer, Float, or String
+        dt_col = f"param{n}_datatype"
+        if dt_col in udt_cols:
+            dt_val = str(udt_row.get(dt_col, "")).strip()
+            if dt_val.lower() not in _PARAM_DATATYPES:
+                logger.warning(
+                    "UDT '%s': Param%d_DataType '%s' is not valid — must be Integer, Float, or String",
+                    udt_name, n, dt_val,
+                )
 
 
 def _validate_udt_sections(blocks: list[dict]) -> None:
