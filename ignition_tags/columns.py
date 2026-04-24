@@ -9,6 +9,10 @@
 TAG_IMPORT_SHEET = "tagImport"
 UDT_IMPORT_SHEET = "udtImport"
 
+# Accepted column name variants for the tag name column in tagImport.
+# The first match found in the DataFrame is used.
+NAME_ALIASES = [":tagname", "tagname", "name"]
+
 # Accepted column name variants for the folder/path column in tagImport.
 # The first match found in the DataFrame is used.
 FOLDER_ALIASES = ["folder", "path", "folderpath", "folder name", "folder_name"]
@@ -19,6 +23,7 @@ FOLDER_ALIASES = ["folder", "path", "folderpath", "folder name", "folder_name"]
 TAG_SCALAR_FIELDS = {
     "documentation": "documentation",
     "tooltip":       "tooltip",
+    "engunit":       "engUnit",
 }
 
 # Engineering-range fields.  Excel column -> Ignition JSON key (camelCase).

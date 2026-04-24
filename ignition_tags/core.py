@@ -15,6 +15,7 @@ import pandas as pd
 
 from .columns import (
     FOLDER_ALIASES,
+    NAME_ALIASES,
     TAG_ALARM_FIELDS,
     TAG_ENG_FIELDS,
     TAG_SCALAR_FIELDS,
@@ -388,13 +389,14 @@ def build_tag_provider(df: pd.DataFrame, provider_name: str, opc_server: str) ->
     df = _norm_df(df)
     df_cols = set(df.columns)
 
+    name_col = next((c for c in NAME_ALIASES if c in df_cols), None)
     folder_col = next((c for c in FOLDER_ALIASES if c in df_cols), None)
 
     top_level_tags = []
     count = 0
 
     for _, row in df.iterrows():
-        raw_name = str(row.get("name", "")).strip()
+        raw_name = str(row.get(name_col, "")).strip() if name_col else ""
         if not raw_name:
             continue
 
@@ -437,13 +439,18 @@ def build_tag_provider(df: pd.DataFrame, provider_name: str, opc_server: str) ->
                 tag["alarms"] = [alarm]
 
         # OPC-connected vs memory tag
+        explicit_vs = str(row.get("valuesource", "")).strip().lower() if "valuesource" in df_cols else ""
         if opcpath:
             tag["opcItemPath"] = opcpath
             tag["opcServer"] = opc_server
-            tag["valueSource"] = "opc"
+            tag["valueSource"] = explicit_vs or "opc"
         else:
-            tag["valueSource"] = "memory"
+            tag["valueSource"] = explicit_vs or "memory"
             tag["value"] = coerce_value(row.get("value", ""), datatype)
+
+        # ReadOnly boolean
+        if "readonly" in df_cols and str(row.get("readonly", "")).strip().lower() in ("true", "1", "yes"):
+            tag["readOnly"] = True
 
         ensure_folder_container(top_level_tags, folder_parts).append(tag)
         count += 1
