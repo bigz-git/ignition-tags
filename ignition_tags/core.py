@@ -456,8 +456,8 @@ def build_tag_provider(df: pd.DataFrame, provider_name: str, opc_server: str) ->
         count += 1
 
     logger.info("Built provider '%s' with %d tags", provider_name, count)
-    return {"tagType": "Provider", "name": provider_name, "tags": top_level_tags}
-
+    # return {"tagType": "Provider", "name": provider_name, "tags": top_level_tags}
+    return {"tags": top_level_tags}
 
 _PARAM_DATATYPES = {"integer", "float", "string"}
 
