@@ -6,18 +6,18 @@
 # dicts automatically.
 
 # Sheet names used in the Excel template
-TAG_IMPORT_SHEET = "tagImport"
-UDT_IMPORT_SHEET = "udtImport"
+TAG_IMPORT_SHEET = "DEVICE_LIST"
+UDT_IMPORT_SHEET = "UDT_LIST"
 
-# Accepted column name variants for the tag name column in tagImport.
+# Accepted column name variants for the tag name column in DEVICE_LIST.
 # The first match found in the DataFrame is used.
 NAME_ALIASES = [":tagname", "tagname", "name"]
 
-# Accepted column name variants for the folder/path column in tagImport.
+# Accepted column name variants for the folder/path column in DEVICE_LIST.
 # The first match found in the DataFrame is used.
 FOLDER_ALIASES = ["folder", "path", "folderpath", "folder name", "folder_name"]
 
-# ── tagImport columns ─────────────────────────────────────────────────────────
+# ── DEVICE_LIST columns ─────────────────────────────────────────────────────────
 
 # Free-text fields that map 1-to-1 between Excel and JSON.
 TAG_SCALAR_FIELDS = {
@@ -43,9 +43,9 @@ TAG_ALARM_FIELDS = {
     "alarmdisplaypath": "displayPath",
 }
 
-# ── udtImport columns ─────────────────────────────────────────────────────────
+# ── UDT_LIST columns ─────────────────────────────────────────────────────────
 #
-# The udtImport sheet uses a sectioned format parsed by _parse_udt_sections()
+# The UDT_LIST sheet uses a sectioned format parsed by _parse_udt_sections()
 # in core.py.  Rows whose first cell starts with ':' are section headers that
 # define column names for the rows beneath them.  Two section types are used:
 #
@@ -69,7 +69,7 @@ UDT_TAG_FIELDS = {
     "documentation": "documentation",
 }
 
-# Special udtImport columns handled outside the generic UDT_TAG_FIELDS loop:
+# Special UDT_LIST columns handled outside the generic UDT_TAG_FIELDS loop:
 #
 #   ReadOnly      — Boolean (true/false/1/0).  Written as a JSON boolean on the tag.
 #

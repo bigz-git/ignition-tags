@@ -25,7 +25,15 @@ import pandas as pd
 from .columns import TAG_IMPORT_SHEET, UDT_IMPORT_SHEET
 import openpyxl
 
-from .core import build_tag_provider, build_udt_types, flatten_tags, flatten_udt_types
+from .core import (
+    build_tag_provider,
+    build_udt_instances,
+    build_udt_types,
+    ensure_folder_container,
+    flatten_tags,
+    flatten_udt_types,
+    split_device_list,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,12 +41,26 @@ logger = logging.getLogger(__name__)
 # ── Command handlers ───────────────────────────────────────────────────────────
 
 def cmd_excel_to_json(args: argparse.Namespace) -> None:
-    """Excel tagImport sheet -> Ignition Provider JSON."""
-    df = pd.read_excel(args.input, sheet_name=TAG_IMPORT_SHEET)
-    provider = build_tag_provider(df, args.provider, args.opc_server)
+    """Excel DEVICE_LIST sheet -> Ignition Provider JSON."""
+    raw_df = pd.read_excel(args.input, sheet_name=TAG_IMPORT_SHEET, header=None)
+    tag_df, udt_raw_df = split_device_list(raw_df)
+
+    provider = build_tag_provider(tag_df, args.provider, args.opc_server) if not tag_df.empty else {"tags": []}
+    top_tags = provider["tags"]
+
+    udt_instance_count = 0
+    if not udt_raw_df.empty:
+        instances = build_udt_instances(udt_raw_df)
+        for folder_parts, inst in instances:
+            ensure_folder_container(top_tags, folder_parts).append(inst)
+        udt_instance_count = len(instances)
+
     _write_json(provider, args.output)
-    tag_count = sum(1 for t in _iter_atomic(provider.get("tags", [])))
-    print(f"Wrote {tag_count} tags to {args.output}")
+    tag_count = sum(1 for _ in _iter_atomic(top_tags))
+    parts = [f"{tag_count} atomic tag(s)"]
+    if udt_instance_count:
+        parts.append(f"{udt_instance_count} UDT instance(s)")
+    print(f"Wrote {', '.join(parts)} to {args.output}")
 
 
 def cmd_json_to_excel(args: argparse.Namespace) -> None:

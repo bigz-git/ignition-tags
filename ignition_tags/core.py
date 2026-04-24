@@ -87,7 +87,10 @@ def ensure_folder_container(container_list, folder_parts):
 def _norm_df(df: pd.DataFrame) -> pd.DataFrame:
     """Normalize column names to lowercase-stripped and fill NaN with empty string."""
     df = df.copy()
-    df.columns = [c.strip().lower() for c in df.columns]
+    df.columns = [
+        "" if (isinstance(c, float) and pd.isna(c)) else str(c).strip().lower()
+        for c in df.columns
+    ]
     return df.fillna("")
 
 
@@ -374,6 +377,126 @@ def flatten_udt_types(data: dict) -> list[list]:
     or tags_only.  The returned rows can be written directly to Excel with openpyxl.
     """
     return [row for udt in _collect_udt_types(data) for row in _udt_to_rows(udt)]
+
+
+def _parse_udt_instance_sections(raw_df: pd.DataFrame) -> list[dict]:
+    """
+    Parse a sectioned udtTagImport sheet into a list of row dicts.
+
+    Each row whose first cell starts with ':' resets the column map for the
+    data rows that follow.  Blank or NaN rows are skipped.
+    """
+    rows: list[dict] = []
+    current_col_map: dict[int, str] = {}
+
+    for _, row in raw_df.iterrows():
+        raw_first = row.iloc[0]
+        first = (
+            str(raw_first).strip()
+            if not (isinstance(raw_first, float) and pd.isna(raw_first))
+            else ""
+        )
+        if not first or first.lower() == "nan":
+            continue
+        if first.startswith(":"):
+            section_key = first[1:].strip().lower()
+            current_col_map = {}
+            for i, val in enumerate(row):
+                if isinstance(val, float) and pd.isna(val):
+                    continue
+                col = str(val).strip().lower()
+                if not col or col == "nan":
+                    continue
+                current_col_map[i] = section_key if i == 0 else col
+        elif current_col_map:
+            rows.append(_row_to_dict(row, current_col_map))
+
+    return rows
+
+
+def build_udt_instances(raw_df: pd.DataFrame) -> list[tuple[list[str], dict]]:
+    """
+    Convert a sectioned udtTagImport DataFrame into (folder_parts, instance_dict) pairs.
+
+    Sheet format — one or more section blocks, each with a header row and data rows:
+        :UDTTagName | Documentation | TypeId | Folder | Param1_Name | Param1_DataType | Param1_Value | …
+        test_a_bool | Alarm bit     | _types_/A_Bool  | Area/Unit | DeviceName | String | Pump 1 | …
+
+    Parameters with a blank Param{N}_Name are skipped.
+    The Folder column is optional; it is also accepted as a slash-delimited prefix
+    in the tag name itself (last segment becomes the instance name).
+
+    Returns a list of (folder_parts, instance_dict) ready to be placed in a tag
+    tree via ensure_folder_container.
+    """
+    result: list[tuple[list[str], dict]] = []
+
+    for row_dict in _parse_udt_instance_sections(raw_df):
+        # The first column key matches the normalized section name (e.g. 'udttagname').
+        # Support common variants so the header label is forgiving.
+        instance_name = ""
+        for key in ("udttagname", "tagname", "name"):
+            val = str(row_dict.get(key, "")).strip()
+            if val and val.lower() != "nan":
+                instance_name = val
+                break
+        if not instance_name:
+            continue
+
+        type_id = str(row_dict.get("typeid", "")).strip()
+        if not type_id or type_id.lower() == "nan":
+            logger.warning("UDT instance '%s': missing typeId — skipped", instance_name)
+            continue
+
+        raw_folder = str(row_dict.get("folder", "")).strip()
+        folder_parts, name = _parse_folder(raw_folder, instance_name)
+
+        instance: dict = {"name": name, "tagType": "UdtInstance", "typeId": type_id}
+
+        doc = str(row_dict.get("documentation", "")).strip()
+        if doc and doc.lower() != "nan":
+            instance["documentation"] = doc
+
+        params = _extract_udt_parameters(row_dict, set(row_dict.keys()))
+        if params:
+            instance["parameters"] = params
+
+        result.append((folder_parts, instance))
+        logger.debug("Built UDT instance '%s' of type '%s'", name, type_id)
+
+    logger.info("Built %d UDT instance(s)", len(result))
+    return result
+
+
+def split_device_list(raw_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Split a raw DEVICE_LIST DataFrame at the first ':udttagname' section header.
+
+    Returns (tag_df, udt_raw_df):
+      tag_df      — first row promoted to column headers, ready for build_tag_provider.
+      udt_raw_df  — raw sectioned rows starting at the ':UDTTagName' header, ready
+                    for build_udt_instances.
+    Either part may be empty if the sheet contains no rows of that type.
+    """
+    split_idx = None
+    for i in range(len(raw_df)):
+        first = raw_df.iloc[i, 0]
+        if not (isinstance(first, float) and pd.isna(first)):
+            if str(first).strip().lower().startswith(":udttag"):
+                split_idx = i
+                break
+
+    tag_raw = raw_df.iloc[:split_idx] if split_idx is not None else raw_df
+    udt_raw = raw_df.iloc[split_idx:].reset_index(drop=True) if split_idx is not None else pd.DataFrame()
+
+    if tag_raw.empty:
+        tag_df: pd.DataFrame = pd.DataFrame()
+    else:
+        tag_df = tag_raw.copy()
+        tag_df.columns = tag_df.iloc[0]
+        tag_df = tag_df.iloc[1:].reset_index(drop=True)
+
+    return tag_df, udt_raw
 
 
 def build_tag_provider(df: pd.DataFrame, provider_name: str, opc_server: str) -> dict:
