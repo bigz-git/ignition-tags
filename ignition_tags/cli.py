@@ -52,7 +52,7 @@ def cmd_json_to_excel(args: argparse.Namespace) -> None:
 
 def cmd_excel_to_udt(args: argparse.Namespace) -> None:
     """Excel udtImport sheet -> Ignition UDT JSON."""
-    df = pd.read_excel(args.input, sheet_name=UDT_IMPORT_SHEET)
+    df = pd.read_excel(args.input, sheet_name=UDT_IMPORT_SHEET, header=None)
     result = build_udt_types(
         df,
         top_types_name=args.top_name,

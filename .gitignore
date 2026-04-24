@@ -3,3 +3,4 @@ CLAUDE.md
 *.json
 __pycache__/
 *.pyc
+*.csv

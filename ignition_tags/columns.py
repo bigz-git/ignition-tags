@@ -38,6 +38,18 @@ TAG_ALARM_FIELDS = {
 }
 
 # ── udtImport columns ─────────────────────────────────────────────────────────
+#
+# The udtImport sheet uses a sectioned format parsed by _parse_udt_sections()
+# in core.py.  Rows whose first cell starts with ':' are section headers that
+# define column names for the rows beneath them.  Two section types are used:
+#
+#   :UDTName  — one data row per UDT.  Columns: UDTName, Documentation,
+#               Param1_Name, Param1_DataType, Param1_Value, Param2_*, …
+#
+#   :TagName  — one data row per tag in the UDT above.  Columns defined by
+#               UDT_TAG_FIELDS plus the special columns listed below.
+#
+# The sheet is read with header=None so the ':' rows are preserved as data.
 
 # Fields present on every UDT tag row.  The processing loop applies light
 # type coercion based on the field name (see core.py: _apply_udt_field).

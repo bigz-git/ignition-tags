@@ -168,6 +168,59 @@ def _extract_udt_parameters(first_row, df_cols: set) -> dict:
     return params
 
 
+def _row_to_dict(row, col_map: dict) -> dict:
+    """Convert a raw pandas row to a normalized-key dict using a column-index map."""
+    return {
+        name: (row.iloc[i] if i < len(row) else "")
+        for i, name in col_map.items()
+    }
+
+
+def _parse_udt_sections(raw_df: pd.DataFrame) -> list[dict]:
+    """
+    Parse a sectioned udtImport sheet into a list of UDT blocks.
+
+    Rows whose first cell starts with ':' are section headers that define column
+    names for the rows beneath them.  ':UDTName' rows open a new UDT block;
+    ':TagName' rows attach tags to the most recently opened UDT.
+
+    Returns a list of {"udt": row_dict, "tags": [row_dict, ...]} dicts.
+    """
+    blocks: list[dict] = []
+    current_section: str | None = None
+    current_col_map: dict[int, str] = {}
+
+    for _, row in raw_df.iterrows():
+        raw_first = row.iloc[0]
+        first = (
+            str(raw_first).strip()
+            if not (isinstance(raw_first, float) and pd.isna(raw_first))
+            else ""
+        )
+
+        if not first or first.lower() == "nan":
+            continue
+
+        if first.startswith(":"):
+            section_key = first[1:].strip().lower()
+            current_section = section_key
+            current_col_map = {}
+            for i, val in enumerate(row):
+                if isinstance(val, float) and pd.isna(val):
+                    continue
+                col = str(val).strip().lower()
+                if not col or col == "nan":
+                    continue
+                current_col_map[i] = section_key if i == 0 else col
+        else:
+            if current_section == "udtname":
+                blocks.append({"udt": _row_to_dict(row, current_col_map), "tags": []})
+            elif current_section == "tagname" and blocks:
+                blocks[-1]["tags"].append(_row_to_dict(row, current_col_map))
+
+    return blocks
+
+
 def _apply_udt_field(tag: dict, excel_col: str, json_key: str, val) -> None:
     """Write one UDT tag field into tag dict with appropriate type coercion."""
     if excel_col == "valuesource":
@@ -304,17 +357,26 @@ def build_tag_provider(df: pd.DataFrame, provider_name: str, opc_server: str) ->
 
 
 def build_udt_types(
-    df: pd.DataFrame,
+    raw_df: pd.DataFrame,
     top_types_name: str = "_types_",
     root_format: str = "folder_root",
     opc_server: str = "Ignition OPC UA Server",
 ) -> dict:
     """
-    Convert a udtImport DataFrame into an Ignition UDT JSON dict.
+    Convert a sectioned udtImport DataFrame into an Ignition UDT JSON dict.
+
+    The DataFrame must be read with header=None so that section-header rows
+    (first cell starts with ':') are preserved as data rows.
+
+    Sheet layout — alternating blocks, one UDT per block:
+        :UDTName  | Documentation | Param1_Name | ...
+        HmiModule | ...           | PLC         | ...
+        :TagName  | DocBinding    | OpcPath     | ...
+        _S_FAULT  | TRUE          | {PLC}...    | ...
 
     Parameters
     ----------
-    df:             DataFrame from the udtImport sheet.
+    raw_df:         Raw DataFrame from the udtImport sheet (header=None).
     top_types_name: Name of the top-level folder (default: "_types_").
     root_format:    Output shape — one of:
                       "folder_root"  -> {name, tagType: Folder, tags: [...]}
@@ -322,38 +384,43 @@ def build_udt_types(
                       "tags_only"    -> {tags: [...]}
     opc_server:     OPC server name written into opcServer for OPC-connected tags.
     """
-    df = _norm_df(df)
-    df_cols = set(df.columns)
-
-    if "udtname" not in df_cols or "tagname" not in df_cols:
-        raise ValueError("Sheet must contain 'UDTName' and 'TagName' columns")
-
+    blocks = _parse_udt_sections(raw_df)
     udt_list = []
-    for udt_name, group in df.groupby("udtname"):
-        udt_name = str(udt_name).strip()
-        if not udt_name:
+
+    for block in blocks:
+        udt_row = block["udt"]
+        tag_rows = block["tags"]
+
+        udt_name = str(udt_row.get("udtname", "")).strip()
+        if not udt_name or udt_name.lower() == "nan":
             continue
 
         udt: dict = {"name": udt_name, "tagType": "UdtType", "tags": []}
 
-        # Build parameters block from param{N}_* columns on the first tag row
-        first_row = group.iloc[0]
-        params = _extract_udt_parameters(first_row, df_cols)
+        # UDT-level documentation
+        doc = str(udt_row.get("documentation", "")).strip()
+        if doc and doc.lower() != "nan":
+            udt["documentation"] = doc
+
+        # Parameters from param{N}_* columns in the UDT section header
+        udt_cols = set(udt_row.keys())
+        params = _extract_udt_parameters(udt_row, udt_cols)
         if params:
             udt["parameters"] = params
 
-        for _, row in group.iterrows():
-            tag_name = str(row.get("tagname", "")).strip()
-            if not tag_name:
+        for tag_row in tag_rows:
+            tag_cols = set(tag_row.keys())
+            tag_name = str(tag_row.get("tagname", "")).strip()
+            if not tag_name or tag_name.lower() == "nan":
                 continue
 
             tag: dict = {"name": tag_name, "tagType": "AtomicTag"}
 
             # General fields driven by UDT_TAG_FIELDS schema
             for excel_col, json_key in UDT_TAG_FIELDS.items():
-                if excel_col not in df_cols:
+                if excel_col not in tag_cols:
                     continue
-                val = row.get(excel_col, "")
+                val = tag_row.get(excel_col, "")
                 if val == "" or (isinstance(val, float) and pd.isna(val)):
                     continue
                 _apply_udt_field(tag, excel_col, json_key, val)
@@ -361,14 +428,14 @@ def build_udt_types(
             tag.setdefault("valueSource", "memory")
 
             # ReadOnly boolean
-            if "readonly" in df_cols:
-                ro = row.get("readonly", "")
+            if "readonly" in tag_cols:
+                ro = tag_row.get("readonly", "")
                 if ro is True or str(ro).strip().lower() in ("true", "1", "yes"):
                     tag["readOnly"] = True
 
             # Documentation with optional parameter binding
-            if "docbinding" in df_cols and "documentation" in tag:
-                doc_bind = row.get("docbinding", "")
+            if "docbinding" in tag_cols and "documentation" in tag:
+                doc_bind = tag_row.get("docbinding", "")
                 if doc_bind is True or str(doc_bind).strip().lower() in ("true", "1", "yes"):
                     tag["documentation"] = {
                         "bindType": "parameter",
@@ -376,8 +443,8 @@ def build_udt_types(
                     }
 
             # EngUnit with optional parameter binding
-            if "engunitbinding" in df_cols and "engUnit" in tag:
-                eu_bind = row.get("engunitbinding", "")
+            if "engunitbinding" in tag_cols and "engUnit" in tag:
+                eu_bind = tag_row.get("engunitbinding", "")
                 if eu_bind is True or str(eu_bind).strip().lower() in ("true", "1", "yes"):
                     tag["engUnit"] = {
                         "bindType": "parameter",
@@ -385,12 +452,12 @@ def build_udt_types(
                     }
 
             # OPC path with optional parameter binding
-            opc = str(row.get("opcpath", "")).strip() if "opcpath" in df_cols else ""
-            if opc:
-                param_binding = row.get("opcpathbinding", "") if "opcpathbinding" in df_cols else ""
+            opc = str(tag_row.get("opcpath", "")).strip() if "opcpath" in tag_cols else ""
+            if opc and opc.lower() != "nan":
+                opc_binding = tag_row.get("opcpathbinding", "") if "opcpathbinding" in tag_cols else ""
                 use_binding = (
-                    param_binding is True
-                    or str(param_binding).strip().lower() in ("true", "1", "yes")
+                    opc_binding is True
+                    or str(opc_binding).strip().lower() in ("true", "1", "yes")
                 )
                 tag["opcItemPath"] = (
                     {"bindType": "parameter", "binding": opc} if use_binding else opc
@@ -401,6 +468,8 @@ def build_udt_types(
             udt["tags"].append(tag)
 
         udt_list.append(udt)
+
+    logger.info("Built %d UDT type(s)", len(udt_list))
 
     if root_format == "folder_root":
         return {"name": top_types_name, "tagType": "Folder", "tags": udt_list}
