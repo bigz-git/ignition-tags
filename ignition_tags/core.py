@@ -155,7 +155,7 @@ def _extract_udt_parameters(first_row, df_cols: set) -> dict:
     params = {}
     for n in param_nums:
         param_name = str(first_row.get(f"param{n}_name", "")).strip()
-        if not param_name:
+        if not param_name or param_name.lower() == "nan":
             continue
         param: dict = {}
         dt = str(first_row.get(f"param{n}_datatype", "")).strip()
@@ -356,6 +356,39 @@ def build_tag_provider(df: pd.DataFrame, provider_name: str, opc_server: str) ->
     return {"tagType": "Provider", "name": provider_name, "tags": top_level_tags}
 
 
+def _validate_udt_block(block: dict, udt_name: str) -> None:
+    """
+    Log warnings for structural issues in a single parsed UDT block.
+
+    Add new per-UDT checks here as additional if-blocks.  Each check should
+    call logger.warning() with a message that includes the UDT name and enough
+    context for the user to locate and fix the problem in their spreadsheet.
+    """
+    udt_row = block["udt"]
+    udt_cols = set(udt_row.keys())
+
+    # Param columns present but name cell is blank
+    param_nums = sorted(
+        int(m.group(1))
+        for col in udt_cols
+        if (m := re.match(r"^param(\d+)_name$", col))
+    )
+    for n in param_nums:
+        param_name = str(udt_row.get(f"param{n}_name", "")).strip()
+        if not param_name or param_name.lower() == "nan":
+            logger.warning(
+                "UDT '%s': Param%d_Name is empty — parameter %d will be skipped",
+                udt_name, n, n,
+            )
+
+
+def _validate_udt_sections(blocks: list[dict]) -> None:
+    """Run _validate_udt_block for every parsed UDT block."""
+    for block in blocks:
+        udt_name = str(block["udt"].get("udtname", "?")).strip()
+        _validate_udt_block(block, udt_name)
+
+
 def build_udt_types(
     raw_df: pd.DataFrame,
     top_types_name: str = "_types_",
@@ -385,6 +418,7 @@ def build_udt_types(
     opc_server:     OPC server name written into opcServer for OPC-connected tags.
     """
     blocks = _parse_udt_sections(raw_df)
+    _validate_udt_sections(blocks)
     udt_list = []
 
     for block in blocks:
