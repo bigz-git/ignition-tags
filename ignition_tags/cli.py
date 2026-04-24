@@ -6,9 +6,10 @@ Run with:
 
 Commands
 --------
-    excel2json   Convert a tagImport Excel sheet to Ignition Provider JSON.
-    json2excel   Convert an Ignition JSON export to a tagImport Excel sheet.
-    excel2udt    Convert a udtImport Excel sheet to Ignition UDT JSON.
+    generate_tags   Convert a DEVICE_LIST Excel sheet to Ignition Provider JSON.
+    convert_tags    Convert an Ignition JSON export to a DEVICE_LIST Excel sheet.
+    generate_udt    Convert a UDT_LIST Excel sheet to Ignition UDT JSON.
+    convert_udt     Convert an Ignition UDT JSON export to Excel UDT_LIST sheet.
 
 Each command is a thin I/O wrapper: it reads a file, calls a pure core
 function, and writes the result.  Adding a new command means adding one
@@ -75,7 +76,7 @@ def cmd_json_to_excel(args: argparse.Namespace) -> None:
 
 
 def cmd_udt_to_excel(args: argparse.Namespace) -> None:
-    """Ignition UDT JSON -> Excel udtImport sheet."""
+    """Ignition UDT JSON -> Excel UDT_LIST sheet."""
     with open(args.input, encoding="utf-8") as f:
         data = json.load(f)
     rows = flatten_udt_types(data)
@@ -90,7 +91,7 @@ def cmd_udt_to_excel(args: argparse.Namespace) -> None:
 
 
 def cmd_excel_to_udt(args: argparse.Namespace) -> None:
-    """Excel udtImport sheet -> Ignition UDT JSON."""
+    """Excel UDT_LIST sheet -> Ignition UDT JSON."""
     df = pd.read_excel(args.input, sheet_name=UDT_IMPORT_SHEET, header=None)
     result = build_udt_types(
         df,
@@ -117,10 +118,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub = parser.add_subparsers(dest="command", required=True, metavar="<command>")
 
-    # ── excel2json ─────────────────────────────────────────────────────────────
+    # ── generate_tags ──────────────────────────────────────────────────────────
     p = sub.add_parser(
-        "excel2json",
-        help="Convert Excel tagImport sheet -> Ignition Provider JSON",
+        "generate_tags",
+        help="Convert Excel DEVICE_LIST sheet -> Ignition Provider JSON",
     )
     p.add_argument("input",  help="Input Excel file (.xlsx)")
     p.add_argument("output", help="Output JSON file")
@@ -139,28 +140,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.set_defaults(func=cmd_excel_to_json)
 
-    # ── json2excel ─────────────────────────────────────────────────────────────
+    # ── convert_tags ───────────────────────────────────────────────────────────
     p = sub.add_parser(
-        "json2excel",
-        help="Convert Ignition JSON export -> Excel tagImport sheet",
+        "convert_tags",
+        help="Convert Ignition JSON export -> Excel DEVICE_LIST sheet",
     )
     p.add_argument("input",  help="Input JSON file")
     p.add_argument("output", help="Output Excel file (.xlsx)")
     p.set_defaults(func=cmd_json_to_excel)
 
-    # ── udt2excel ──────────────────────────────────────────────────────────────
+    # ── generate_udt ───────────────────────────────────────────────────────────
     p = sub.add_parser(
-        "udt2excel",
-        help="Convert Ignition UDT JSON export -> Excel udtImport sheet",
-    )
-    p.add_argument("input",  help="Input UDT JSON file")
-    p.add_argument("output", help="Output Excel file (.xlsx)")
-    p.set_defaults(func=cmd_udt_to_excel)
-
-    # ── excel2udt ──────────────────────────────────────────────────────────────
-    p = sub.add_parser(
-        "excel2udt",
-        help="Convert Excel udtImport sheet -> Ignition UDT JSON",
+        "generate_udt",
+        help="Convert Excel UDT_LIST sheet -> Ignition UDT JSON",
     )
     p.add_argument("input",  help="Input Excel file (.xlsx)")
     p.add_argument("output", help="Output JSON file")
@@ -186,6 +178,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.set_defaults(func=cmd_excel_to_udt)
 
+    # ── convert_udt ────────────────────────────────────────────────────────────
+    p = sub.add_parser(
+        "convert_udt",
+        help="Convert Ignition UDT JSON export -> Excel UDT_LIST sheet",
+    )
+    p.add_argument("input",  help="Input UDT JSON file")
+    p.add_argument("output", help="Output Excel file (.xlsx)")
+    p.set_defaults(func=cmd_udt_to_excel)
+    
     return parser
 
 

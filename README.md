@@ -35,8 +35,8 @@ All commands are run as a Python module.  Use `-v` for verbose/debug output.
 ### Excel -> Ignition Provider JSON
 
 ```bash
-python -m ignition_tags excel2json input.xlsx output.json
-python -m ignition_tags excel2json input.xlsx output.json --provider MySite --opc-server "My OPC Server"
+python -m ignition_tags generate_tags input.xlsx output.json
+python -m ignition_tags generate_tags input.xlsx output.json --provider MySite --opc-server "My OPC Server"
 ```
 
 Options:
@@ -69,7 +69,7 @@ The input file must have a sheet named `tagImport` with these columns:
 ### Ignition JSON -> Excel
 
 ```bash
-python -m ignition_tags json2excel export.json output.xlsx
+python -m ignition_tags convert_tags export.json output.xlsx
 ```
 
 Reads an Ignition JSON export and writes a `tagImport` sheet using the same
@@ -78,8 +78,8 @@ column names as the import format above.
 ### Excel -> UDT JSON
 
 ```bash
-python -m ignition_tags excel2udt input.xlsx output.json
-python -m ignition_tags excel2udt input.xlsx output.json --top-name _types_ --format folder_root
+python -m ignition_tags generate_udt input.xlsx output.json
+python -m ignition_tags generate_udt input.xlsx output.json --top-name _types_ --format folder_root
 ```
 
 Options:
