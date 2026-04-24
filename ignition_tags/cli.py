@@ -23,7 +23,9 @@ import sys
 import pandas as pd
 
 from .columns import TAG_IMPORT_SHEET, UDT_IMPORT_SHEET
-from .core import build_tag_provider, build_udt_types, flatten_tags
+import openpyxl
+
+from .core import build_tag_provider, build_udt_types, flatten_tags, flatten_udt_types
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +50,21 @@ def cmd_json_to_excel(args: argparse.Namespace) -> None:
     rows = flatten_tags(data["tags"])
     pd.DataFrame(rows).to_excel(args.output, sheet_name=TAG_IMPORT_SHEET, index=False)
     print(f"Wrote {len(rows)} tags to {args.output}")
+
+
+def cmd_udt_to_excel(args: argparse.Namespace) -> None:
+    """Ignition UDT JSON -> Excel udtImport sheet."""
+    with open(args.input, encoding="utf-8") as f:
+        data = json.load(f)
+    rows = flatten_udt_types(data)
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = UDT_IMPORT_SHEET
+    for row in rows:
+        ws.append(row)
+    wb.save(args.output)
+    udt_count = sum(1 for r in rows if r and str(r[0]) == ":UDTName")
+    print(f"Wrote {udt_count} UDT(s) to {args.output}")
 
 
 def cmd_excel_to_udt(args: argparse.Namespace) -> None:
@@ -108,6 +125,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("input",  help="Input JSON file")
     p.add_argument("output", help="Output Excel file (.xlsx)")
     p.set_defaults(func=cmd_json_to_excel)
+
+    # ── udt2excel ──────────────────────────────────────────────────────────────
+    p = sub.add_parser(
+        "udt2excel",
+        help="Convert Ignition UDT JSON export -> Excel udtImport sheet",
+    )
+    p.add_argument("input",  help="Input UDT JSON file")
+    p.add_argument("output", help="Output Excel file (.xlsx)")
+    p.set_defaults(func=cmd_udt_to_excel)
 
     # ── excel2udt ──────────────────────────────────────────────────────────────
     p = sub.add_parser(

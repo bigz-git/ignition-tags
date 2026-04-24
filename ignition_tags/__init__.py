@@ -9,6 +9,6 @@ CLI:
     python -m ignition_tags --help
 """
 
-from .core import build_tag_provider, build_udt_types, flatten_tags
+from .core import build_tag_provider, build_udt_types, flatten_tags, flatten_udt_types
 
-__all__ = ["build_tag_provider", "build_udt_types", "flatten_tags"]
+__all__ = ["build_tag_provider", "build_udt_types", "flatten_tags", "flatten_udt_types"]

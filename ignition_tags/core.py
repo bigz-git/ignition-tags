@@ -279,6 +279,102 @@ def flatten_tags(tags: list, parent_path: str = "") -> list[dict]:
     return rows
 
 
+def _unpack_binding(val) -> tuple[str, bool]:
+    """Return (plain_value, is_parameter_bound) for a tag field."""
+    if isinstance(val, dict) and val.get("bindType") == "parameter":
+        return str(val.get("binding", "")), True
+    return ("" if val is None else str(val)), False
+
+
+def _collect_udt_types(data: dict) -> list[dict]:
+    """
+    Recursively extract all UdtType objects from any root format.
+
+    Handles: single UdtType, folder_root, wrapped_tags, tags_only.
+    """
+    if data.get("tagType") == "UdtType":
+        return [data]
+    result = []
+    for item in data.get("tags", []):
+        if item.get("tagType") == "Folder":
+            result.extend(_collect_udt_types(item))
+        elif item.get("tagType") == "UdtType":
+            result.append(item)
+    return result
+
+
+def _udt_to_rows(udt: dict) -> list[list]:
+    """Convert a single UdtType dict to a list of raw rows for the sectioned sheet."""
+    rows = []
+    params = udt.get("parameters") or {}
+    param_items = list(params.items())
+
+    # :UDTName header row — param columns sized to this UDT's parameter count
+    udt_header = [":UDTName", "Documentation"]
+    for i in range(1, len(param_items) + 1):
+        udt_header += [f"Param{i}_Name", f"Param{i}_DataType", f"Param{i}_Value"]
+    rows.append(udt_header)
+
+    # UDT data row
+    udt_data: list = [udt.get("name", ""), udt.get("documentation", "") or ""]
+    for param_name, param_def in param_items:
+        udt_data += [param_name, param_def.get("dataType", ""), param_def.get("value", "")]
+    rows.append(udt_data)
+
+    # :TagName header row — fixed column set
+    rows.append([
+        ":TagName", "DocBinding", "Documentation", "ValueSource", "DataType", "Value",
+        "OPCPathBinding", "OPCPath", "EngUnitBinding", "EngUnit", "EngHigh", "EngLow",
+        "ReadOnly", "AlarmName", "AlarmPriority", "AlarmLabel", "AlarmNotes",
+        "AlarmMode", "AlarmSetpoint", "AlarmDisplayPath",
+    ])
+
+    # Tag data rows
+    for tag in udt.get("tags", []):
+        if tag.get("tagType") != "AtomicTag":
+            continue
+
+        doc, doc_bound       = _unpack_binding(tag.get("documentation", ""))
+        eu,  eu_bound        = _unpack_binding(tag.get("engUnit", ""))
+        opc, opc_bound       = _unpack_binding(tag.get("opcItemPath", ""))
+        alarm = (tag.get("alarms") or [{}])[0]
+
+        rows.append([
+            tag.get("name", ""),
+            "TRUE" if doc_bound else "",
+            doc,
+            tag.get("valueSource", ""),
+            tag.get("dataType", ""),
+            "" if tag.get("value") is None else tag["value"],
+            "TRUE" if opc_bound else "",
+            opc,
+            "TRUE" if eu_bound else "",
+            eu,
+            tag.get("engHigh", ""),
+            tag.get("engLow", ""),
+            "TRUE" if tag.get("readOnly") else "",
+            alarm.get("name", ""),
+            alarm.get("priority", ""),
+            alarm.get("label", ""),
+            alarm.get("notes", ""),
+            alarm.get("mode", ""),
+            alarm.get("setpointA", ""),
+            alarm.get("displayPath", ""),
+        ])
+
+    return rows
+
+
+def flatten_udt_types(data: dict) -> list[list]:
+    """
+    Convert an Ignition UDT JSON export into raw rows for the sectioned udtImport sheet.
+
+    Accepts any root format: a single UdtType object, folder_root, wrapped_tags,
+    or tags_only.  The returned rows can be written directly to Excel with openpyxl.
+    """
+    return [row for udt in _collect_udt_types(data) for row in _udt_to_rows(udt)]
+
+
 def build_tag_provider(df: pd.DataFrame, provider_name: str, opc_server: str) -> dict:
     """
     Convert a tagImport DataFrame into an Ignition Provider JSON dict.
