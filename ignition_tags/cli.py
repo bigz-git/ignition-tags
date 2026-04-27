@@ -6,10 +6,10 @@ Run with:
 
 Commands
 --------
-    generate_tags   Convert a DEVICE_LIST Excel sheet to Ignition Provider JSON.
-    convert_tags    Convert an Ignition JSON export to a DEVICE_LIST Excel sheet.
-    generate_udt    Convert a UDT_LIST Excel sheet to Ignition UDT JSON.
-    convert_udt     Convert an Ignition UDT JSON export to Excel UDT_LIST sheet.
+    generate-tags   Convert a DEVICE_LIST Excel sheet to Ignition Provider JSON.
+    convert-tags    Convert an Ignition JSON export to a DEVICE_LIST Excel sheet.
+    generate-udt    Convert a UDT_LIST Excel sheet to Ignition UDT JSON.
+    convert-udt     Convert an Ignition UDT JSON export to Excel UDT_LIST sheet.
 
 Each command is a thin I/O wrapper: it reads a file, calls a pure core
 function, and writes the result.  Adding a new command means adding one
@@ -124,9 +124,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub = parser.add_subparsers(dest="command", required=True, metavar="<command>")
 
-    # ── generate_tags ──────────────────────────────────────────────────────────
+    # ── generate-tags ──────────────────────────────────────────────────────────
     p = sub.add_parser(
-        "generate_tags",
+        "generate-tags",
         help="Convert Excel DEVICE_LIST sheet -> Ignition Provider JSON",
     )
     p.add_argument("input",  help="Input Excel file (.xlsx)")
@@ -146,18 +146,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.set_defaults(func=cmd_excel_to_json)
 
-    # ── convert_tags ───────────────────────────────────────────────────────────
+    # ── convert-tags ───────────────────────────────────────────────────────────
     p = sub.add_parser(
-        "convert_tags",
+        "convert-tags",
         help="Convert Ignition JSON export -> Excel DEVICE_LIST sheet",
     )
     p.add_argument("input",  help="Input JSON file")
     p.add_argument("output", help="Output Excel file (.xlsx)")
     p.set_defaults(func=cmd_json_to_excel)
 
-    # ── generate_udt ───────────────────────────────────────────────────────────
+    # ── generate-udt ───────────────────────────────────────────────────────────
     p = sub.add_parser(
-        "generate_udt",
+        "generate-udt",
         help="Convert Excel UDT_LIST sheet -> Ignition UDT JSON",
     )
     p.add_argument("input",  help="Input Excel file (.xlsx)")
@@ -184,9 +184,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.set_defaults(func=cmd_excel_to_udt)
 
-    # ── convert_udt ────────────────────────────────────────────────────────────
+    # ── convert-udt ────────────────────────────────────────────────────────────
     p = sub.add_parser(
-        "convert_udt",
+        "convert-udt",
         help="Convert Ignition UDT JSON export -> Excel UDT_LIST sheet",
     )
     p.add_argument("input",  help="Input UDT JSON file")

@@ -37,8 +37,8 @@ All commands are run as a Python module.  Use `-v` for verbose/debug output.
 ### Excel -> Ignition Provider JSON
 
 ```bash
-python -m ignition_tags generate_tags input.xlsx output.json
-python -m ignition_tags generate_tags input.xlsx output.json --provider MySite --opc-server "My OPC Server"
+python -m ignition_tags generate-tags input.xlsx output.json
+python -m ignition_tags generate-tags input.xlsx output.json --provider MySite --opc-server "My OPC Server"
 ```
 
 Options:
@@ -79,7 +79,7 @@ Start that section with a `:UDTTagName` header row (see [Excel -> UDT Instances]
 ### Ignition JSON -> Excel
 
 ```bash
-python -m ignition_tags convert_tags export.json output.xlsx
+python -m ignition_tags convert-tags export.json output.xlsx
 ```
 
 Reads an Ignition JSON export and writes a `DEVICE_LIST` sheet using the same
@@ -88,8 +88,8 @@ column names as the import format above.
 ### Excel -> UDT Type JSON
 
 ```bash
-python -m ignition_tags generate_udt input.xlsx output.json
-python -m ignition_tags generate_udt input.xlsx output.json --top-name _types_ --format folder_root --opc-server "My OPC Server"
+python -m ignition_tags generate-udt input.xlsx output.json
+python -m ignition_tags generate-udt input.xlsx output.json --top-name _types_ --format folder_root --opc-server "My OPC Server"
 ```
 
 Options:
@@ -120,7 +120,7 @@ per UDT block:
 ### UDT JSON -> Excel
 
 ```bash
-python -m ignition_tags convert_udt export.json output.xlsx
+python -m ignition_tags convert-udt export.json output.xlsx
 ```
 
 Reads an Ignition UDT JSON export and writes a `UDT_LIST` sheet in the sectioned
@@ -137,7 +137,7 @@ the tag rows.  Start the instance section with a `:UDTTagName` header row:
 pump_1      | Feed pump     | _types_/Pump    | Area1/Unit2 | DeviceName  | String          | P-101
 ```
 
-The `generate_tags` command processes both sections in one pass and merges them
+The `generate-tags` command processes both sections in one pass and merges them
 into a single Provider JSON.
 
 ## Excel Template
