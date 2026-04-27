@@ -21,21 +21,21 @@ python -m ignition_tags generate_tags test_input.xlsx output.json
 
 ### 1A — Basic tag types (verify JSON shape, then import into Ignition)
 
-- [ ] **OPC Boolean** — row with `datatype=Boolean`, `opcpath` populated. Verify JSON has `valueSource: opc`, `opcItemPath` set, no `value` key.
-- [ ] **Memory Boolean** — row with `datatype=Boolean`, `opcpath` blank. Verify JSON has `valueSource: memory`, `value: false`, no `opcItemPath`.
-- [ ] **OPC Float4** — row with `datatype=Float4`, `opcpath` populated.
-- [ ] **Memory Float4** — row with `datatype=Float4`, `opcpath` blank. Verify `value: 0.0`.
-- [ ] **OPC Int4** — row with `datatype=Int4`, `opcpath` populated.
-- [ ] **Memory Int4** — row with `datatype=Int4`, `opcpath` blank. Verify `value: 0`.
-- [ ] **Memory String** — row with `datatype=String`, `opcpath` blank. Verify `value: ""`.
-- [ ] **No datatype** — leave `datatype` blank. Verify JSON defaults to `Float4`.
+- [x] **OPC Boolean** — row with `datatype=Boolean`, `opcpath` populated. Verify JSON has `valueSource: opc`, `opcItemPath` set, no `value` key.
+- [x] **Memory Boolean** — row with `datatype=Boolean`, `opcpath` blank. Verify JSON has `valueSource: memory`, `value: false`, no `opcItemPath`.
+- [x] **OPC Float4** — row with `datatype=Float4`, `opcpath` populated.
+- [x] **Memory Float4** — row with `datatype=Float4`, `opcpath` blank. Verify `value: 0.0`.
+- [x] **OPC Int4** — row with `datatype=Int4`, `opcpath` populated.
+- [x] **Memory Int4** — row with `datatype=Int4`, `opcpath` blank. Verify `value: 0`.
+- [x] **Memory String** — row with `datatype=String`, `opcpath` blank. Verify `value: ""`.
+- [x] **No datatype** — leave `datatype` blank. Verify JSON defaults to `Float4`.
 
 ### 1B — Optional fields
 
-- [ ] **Documentation + tooltip** — populate both. Verify both appear in JSON and display correctly in Ignition tag browser.
-- [ ] **Engineering limits** — populate `englow` and `enghigh`. Verify `engLow` / `engHigh` in JSON.
-- [ ] **Eng unit** — populate `engunit`. Verify `engUnit` in JSON.
-- [ ] **ReadOnly** — set `readonly=TRUE`. Verify `readOnly: true` in JSON and tag is read-only in Ignition.
+- [x] **Documentation + tooltip** — populate both. Verify both appear in JSON and display correctly in Ignition tag browser.
+- [x] **Engineering limits** — populate `englow` and `enghigh`. Verify `engLow` / `engHigh` in JSON.
+- [x] **Eng unit** — populate `engunit`. Verify `engUnit` in JSON.
+- [x] **ReadOnly** — set `readonly=TRUE`. Verify `readOnly: true` in JSON and tag is read-only in Ignition.
 
 ### 1C — Alarm
 
@@ -164,4 +164,4 @@ Use this section to capture anything surprising or broken during testing.
 
 | Date | Command | Finding | Resolved? |
 |------|---------|---------|-----------|
-|      |         |         |           |
+|4/27  |generate-tags         |entering an undefined tag group will import as entered wihtout error evein if tag group is undefined         | na          |
