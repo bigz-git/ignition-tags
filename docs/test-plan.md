@@ -39,17 +39,17 @@ python -m ignition_tags generate_tags test_input.xlsx output.json
 
 ### 1C — Alarm
 
-- [ ] **Full alarm** — populate `alarmname`, `alarmlabel`, `alarmmode`, `alarmsetpoint`, `alarmpriority`, `alarmnotes`, `alarmdisplaypath`. Verify alarm sub-object in JSON. Import and confirm alarm appears on tag in Ignition.
-- [ ] **Alarm setpoint numeric** — setpoint should be a number in JSON (not a string).
-- [ ] **No alarm** — leave `alarmname` blank. Verify no `alarms` key in JSON.
+- [x] **Full alarm** — populate `alarmname`, `alarmlabel`, `alarmmode`, `alarmsetpoint`, `alarmpriority`, `alarmnotes`, `alarmdisplaypath`. Verify alarm sub-object in JSON. Import and confirm alarm appears on tag in Ignition.
+- [x] **Alarm setpoint numeric** — setpoint should be a number in JSON (not a string).
+- [x] **No alarm** — leave `alarmname` blank. Verify no `alarms` key in JSON.
 
 ### 1D — Folder nesting
 
-- [ ] **Flat (no folder)** — no `folder` column value. Tag appears at root.
-- [ ] **Single folder** — `folder=Area1`. Verify JSON nests tag inside one Folder node.
-- [ ] **Two-level folder** — `folder=Area1/Unit2`. Verify two nested Folder nodes.
-- [ ] **Folder in name column** — leave `folder` blank, set `name=Area1/tag1`. Verify same result as `folder=Area1`, `name=tag1`.
-- [ ] **Mixed** — some rows with folder, some without. Verify correct tree shape in Ignition.
+- [x] **Flat (no folder)** — no `folder` column value. Tag appears at root.
+- [x] **Single folder** — `folder=Area1`. Verify JSON nests tag inside one Folder node.
+- [x] **Two-level folder** — `folder=Area1/Unit2`. Verify two nested Folder nodes.
+- [x] **Folder in name column** — leave `folder` blank, set `name=Area1/tag1`. Verify same result as `folder=Area1`, `name=tag1`.
+- [x] **Mixed** — some rows with folder, some without. Verify correct tree shape in Ignition.
 
 ### 1E — Provider / OPC server options
 
@@ -164,6 +164,8 @@ Use this section to capture anything surprising or broken during testing.
 
 | Date | Command | Finding | Resolved? |
 |------|---------|---------|-----------|
-|4/27  |generate-tags         |entering an undefined tag group will import as entered wihtout error even if tag group is undefined         | na          |
+|4/27  |generate-tags|entering an undefined tag group will import as entered wihtout error even if tag group is undefined   | na   |
 |4/27  |generate-tags|alarm priority must start with capital letter. options are Diagnostic, Low, Medium, High, and Critical| no|
-
+|4/27  |generate-tags|alarm mode must start with capital letter. If it doesnt match available options exactly, it will default to "Equal". There are many options available, but for the purpose of this tool, these should be used: Equal, Not Equal, When True, and When False. These options work for Boolean alarms, this can be expanded later| no|
+|4/27  |generate-tags|alarm setpoint column can work with 0 or "FALSE" and 1 or "TRUE"   | na   |
+|4/27  |generate-tags|when defining a folder structure, the structure can either be defined in the :TagName column with the "folder/subfolder/tagname" format OR in the Folder column using "folder/subfolder" but not both  | na   |
