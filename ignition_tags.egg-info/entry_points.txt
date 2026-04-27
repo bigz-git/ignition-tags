@@ -1,0 +1,2 @@
+[console_scripts]
+ignition-tags = ignition_tags.cli:main

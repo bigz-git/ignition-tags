@@ -22,23 +22,26 @@ tag hierarchies without clicking through Ignition's designer one tag at a time.
 Requires Python 3.10+.
 
 ```bash
-# Create and activate a virtual environment (Windows)
+git clone <repo-url>
+cd ignition-tags
+
 python -m venv .venv
 .venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
+pip install -e .
 ```
+
+The `-e` flag installs in editable mode — after a `git pull` to get updates, no reinstall is needed.
 
 ## Usage
 
-All commands are run as a Python module.  Use `-v` for verbose/debug output.
+Activate the venv first (`.venv\Scripts\activate`), then use the `ignition-tags` command.  Use `-v` for verbose/debug output.
 
 ### Excel -> Ignition Provider JSON
 
 ```bash
-python -m ignition_tags generate-tags input.xlsx output.json
-python -m ignition_tags generate-tags input.xlsx output.json --provider MySite --opc-server "My OPC Server"
+ignition-tags generate-tags input.xlsx output.json
+ignition-tags generate-tags input.xlsx output.json --provider MySite --opc-server "My OPC Server"
 ```
 
 Options:
@@ -79,7 +82,7 @@ Start that section with a `:UDTTagName` header row (see [Excel -> UDT Instances]
 ### Ignition JSON -> Excel
 
 ```bash
-python -m ignition_tags convert-tags export.json output.xlsx
+ignition-tags convert-tags export.json output.xlsx
 ```
 
 Reads an Ignition JSON export and writes a `DEVICE_LIST` sheet using the same
@@ -88,8 +91,8 @@ column names as the import format above.
 ### Excel -> UDT Type JSON
 
 ```bash
-python -m ignition_tags generate-udt input.xlsx output.json
-python -m ignition_tags generate-udt input.xlsx output.json --top-name _types_ --format folder_root --opc-server "My OPC Server"
+ignition-tags generate-udt input.xlsx output.json
+ignition-tags generate-udt input.xlsx output.json --top-name _types_ --format folder_root --opc-server "My OPC Server"
 ```
 
 Options:
@@ -120,7 +123,7 @@ per UDT block:
 ### UDT JSON -> Excel
 
 ```bash
-python -m ignition_tags convert-udt export.json output.xlsx
+ignition-tags convert-udt export.json output.xlsx
 ```
 
 Reads an Ignition UDT JSON export and writes a `UDT_LIST` sheet in the sectioned
@@ -142,9 +145,9 @@ into a single Provider JSON.
 
 ## Excel Template
 
-See `archive/ignition_tag_tool_excel_format_for_r9.xlsx` for a reference
-spreadsheet with both `DEVICE_LIST` and `UDT_LIST` sheets pre-formatted with
-the correct column headers.
+`ignition_tag_tool_template.xlsx` in the repo root is the reference spreadsheet
+with both `DEVICE_LIST` and `UDT_LIST` sheets pre-formatted with the correct
+column headers.  Copy it to a working file — don't edit the template directly.
 
 ## Project Layout
 
@@ -155,11 +158,12 @@ ignition_tags/          Python package (CLI + library)
   cli.py                Argparse entry point and command handlers
   gui.py                GUI placeholder (not yet implemented)
   __init__.py           Public API re-exports for scripting/GUI use
-  __main__.py           Enables python -m ignition_tags
+  __main__.py           Enables ignition-tags
 
 archive/                Original single-file GUI tool (reference only)
 json_files/             Working directory for generated JSON output
-requirements.txt        Python dependencies (pandas, openpyxl)
+pyproject.toml          Package metadata — pip install -e .
+requirements.txt        Dependencies list (pandas, openpyxl)
 ```
 
 ## Public API
@@ -198,16 +202,15 @@ See `ignition_tags/gui.py` for the starting point and
 
 ## TODO
 
-- [ ] **Error checking** — add structured validation before conversion (missing
-  required columns, invalid datatype strings, duplicate tag names, malformed OPC
-  paths) and surface actionable messages instead of stack traces.
-- [ ] **Nested UDTs** — investigate support for UDT types that contain other UDT
-  instances as members, including how the sectioned sheet format should represent
-  the nesting hierarchy.
+- [x] **Error checking** — structured validation before conversion: missing name
+  column, blank name rows, invalid datatype strings, duplicate tag paths, and
+  `valueSource=opc` with no OPC path.  All surface actionable messages instead
+  of stack traces.
+- [x] **Package as wheel** — `pyproject.toml` added; install with `pip install -e .`
+  and invoke as `ignition-tags`.
+- [x] **Version number tracking** — `__version__` in `__init__.py`, wired to
+  `ignition-tags --version`.
+- [ ] **Nested UDTs** — support for UDT types that contain other UDT instances as
+  members (requires redesigning the `UDT_LIST` sheet format).
 - [ ] **GUI** — implement `ignition_tags/gui.py` as a Tkinter front-end using the
   existing public API (`build_tag_provider`, `build_udt_types`, `flatten_tags`).
-- [ ] **Package as wheel** — add `pyproject.toml` (or `setup.cfg`) so the tool
-  can be installed with `pip install .` and invoked as `ignition-tags` without
-  the `python -m` prefix.
-- [ ] **Version number tracking** — introduce a `__version__` string (e.g. in
-  `__init__.py`) and wire it to `--version` in the CLI and the wheel metadata.

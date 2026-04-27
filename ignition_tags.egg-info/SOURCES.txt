@@ -1,0 +1,14 @@
+README.md
+pyproject.toml
+ignition_tags/__init__.py
+ignition_tags/__main__.py
+ignition_tags/cli.py
+ignition_tags/columns.py
+ignition_tags/core.py
+ignition_tags/gui.py
+ignition_tags.egg-info/PKG-INFO
+ignition_tags.egg-info/SOURCES.txt
+ignition_tags.egg-info/dependency_links.txt
+ignition_tags.egg-info/entry_points.txt
+ignition_tags.egg-info/requires.txt
+ignition_tags.egg-info/top_level.txt
