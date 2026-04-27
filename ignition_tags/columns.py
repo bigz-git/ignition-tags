@@ -24,6 +24,7 @@ TAG_SCALAR_FIELDS = {
     "documentation": "documentation",
     "tooltip":       "tooltip",
     "engunit":       "engUnit",
+    "taggroup":      "tagGroup",
 }
 
 # Engineering-range fields.  Excel column -> Ignition JSON key (camelCase).
@@ -67,6 +68,7 @@ UDT_TAG_FIELDS = {
     "englow":        "engLow",
     "engunit":       "engUnit",
     "documentation": "documentation",
+    "taggroup":      "tagGroup",
 }
 
 # Special UDT_LIST columns handled outside the generic UDT_TAG_FIELDS loop:

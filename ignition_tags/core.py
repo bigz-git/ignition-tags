@@ -515,6 +515,8 @@ def build_tag_provider(df: pd.DataFrame, provider_name: str, opc_server: str) ->
     name_col = next((c for c in NAME_ALIASES if c in df_cols), None)
     folder_col = next((c for c in FOLDER_ALIASES if c in df_cols), None)
 
+    _validate_tag_df(df, df_cols, name_col, folder_col)
+
     top_level_tags = []
     count = 0
 
@@ -583,6 +585,80 @@ def build_tag_provider(df: pd.DataFrame, provider_name: str, opc_server: str) ->
     return {"tags": top_level_tags}
 
 _PARAM_DATATYPES = {"integer", "float", "string"}
+
+_VALID_DATATYPES = {
+    "int1", "int2", "int4", "int8",
+    "float4", "float8",
+    "boolean",
+    "string",
+    "datetime",
+    "dataset",
+    "document",
+}
+
+
+def _validate_tag_df(
+    df: pd.DataFrame,
+    df_cols: set,
+    name_col: str | None,
+    folder_col: str | None,
+) -> None:
+    """
+    Validate a normalized tagImport DataFrame before processing.
+
+    Raises ValueError for fatal errors (cannot continue).
+    Logs warnings for non-fatal issues (processing continues, result may be incomplete).
+    """
+    # 1. Name column must exist
+    if name_col is None:
+        accepted = ", ".join(f"'{a}'" for a in NAME_ALIASES)
+        raise ValueError(
+            f"No tag name column found in DEVICE_LIST sheet. "
+            f"Expected one of: {accepted}"
+        )
+
+    seen_paths: set[str] = set()
+
+    for row_idx, row in df.iterrows():
+        raw_name = str(row.get(name_col, "")).strip()
+        excel_row = row_idx + 2  # 0-based index + header row + 1-based
+
+        # 2. Blank name rows
+        if not raw_name:
+            logger.warning("Row %d: name is blank — row will be skipped", excel_row)
+            continue
+
+        # 3. Invalid datatype string
+        datatype = str(row.get("datatype", "")).strip()
+        if datatype and datatype.lower() not in _VALID_DATATYPES:
+            logger.warning(
+                "Row %d (tag '%s'): unrecognised datatype '%s' — "
+                "valid types: %s",
+                excel_row, raw_name, datatype,
+                ", ".join(sorted(_VALID_DATATYPES, key=str.lower)),
+            )
+
+        # 4. Duplicate tag paths
+        raw_folder = str(row.get(folder_col, "")).strip() if folder_col else ""
+        folder_parts, name = _parse_folder(raw_folder, raw_name)
+        full_path = "/".join(folder_parts + [name]) if folder_parts else name
+        if full_path in seen_paths:
+            logger.warning(
+                "Row %d: duplicate tag path '%s' — second occurrence will overwrite the first",
+                excel_row, full_path,
+            )
+        else:
+            seen_paths.add(full_path)
+
+        # 5. valueSource/opcpath consistency
+        if "valuesource" in df_cols:
+            vs = str(row.get("valuesource", "")).strip().lower()
+            opcpath = str(row.get("opcpath", "")).strip() if "opcpath" in df_cols else ""
+            if vs == "opc" and not opcpath:
+                logger.warning(
+                    "Row %d (tag '%s'): valueSource is 'opc' but opcpath is blank",
+                    excel_row, raw_name,
+                )
 
 
 def _validate_udt_block(block: dict, udt_name: str) -> None:
