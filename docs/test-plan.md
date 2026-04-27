@@ -76,9 +76,9 @@ python -m ignition_tags convert-tags export.json output.xlsx
 
 ### 2A — Basic round-trip
 
-- [ ] **Round-trip** — run `generate-tags` on your test sheet, then run `convert-tags` on the output JSON, open the resulting Excel and confirm all rows and values match the original. Pay attention to: folder paths, datatypes, opcpath, alarm fields.
-- [ ] **Folders preserved** — tags nested in folders should have the correct folder path in the output Excel.
-- [ ] **Alarms preserved** — alarm fields should round-trip intact.
+- [x] **Round-trip** — run `generate-tags` on your test sheet, then run `convert-tags` on the output JSON, open the resulting Excel and confirm all rows and values match the original. Pay attention to: folder paths, datatypes, opcpath, alarm fields.
+- [x] **Folders preserved** — tags nested in folders should have the correct folder path in the output Excel.
+- [x] **Alarms preserved** — alarm fields should round-trip intact.
 
 ### 2B — Real Ignition export
 
@@ -95,24 +95,24 @@ python -m ignition_tags generate-udt test_input.xlsx output.json --top-name _typ
 
 ### 3A — Basic UDT
 
-- [ ] **Memory tags only** — UDT with a few memory tags, no OPC paths, no bindings. Verify JSON shape: `tagType: UdtType`, `tags` array with `AtomicTag` entries.
-- [ ] **OPC tags with static path** — `OPCPath` populated, `OPCPathBinding=FALSE`. Verify `opcItemPath` is a plain string.
-- [ ] **OPC tags with parameter binding** — `OPCPathBinding=TRUE`, `OPCPath` contains `{ParamName}`. Verify `opcItemPath` is `{"bindType": "parameter", "binding": "..."}`.
-- [ ] **Documentation binding** — `DocBinding=TRUE`. Verify `documentation` is a binding object.
-- [ ] **EngUnit binding** — `EngUnitBinding=TRUE`. Verify `engUnit` is a binding object.
-- [ ] **ReadOnly tag** — `ReadOnly=TRUE`. Verify `readOnly: true` on tag.
-- [ ] **Alarm on UDT tag** — populate alarm fields. Verify alarm sub-object in JSON.
+- [x] **Memory tags only** — UDT with a few memory tags, no OPC paths, no bindings. Verify JSON shape: `tagType: UdtType`, `tags` array with `AtomicTag` entries.
+- [x] **OPC tags with static path** — `OPCPath` populated, `OPCPathBinding=FALSE`. Verify `opcItemPath` is a plain string.
+- [x] **OPC tags with parameter binding** — `OPCPathBinding=TRUE`, `OPCPath` contains `{ParamName}`. Verify `opcItemPath` is `{"bindType": "parameter", "binding": "..."}`.
+- [x] **Documentation binding** — `DocBinding=TRUE`. Verify `documentation` is a binding object.
+- [x] **EngUnit binding** — `EngUnitBinding=TRUE`. Verify `engUnit` is a binding object.
+- [x] **ReadOnly tag** — `ReadOnly=TRUE`. Verify `readOnly: true` on tag.
+- [x] **Alarm on UDT tag** — populate alarm fields. Verify alarm sub-object in JSON.
 
 ### 3B — Parameters
 
-- [ ] **Single parameter** — one `Param1_Name / Param1_DataType / Param1_Value`. Verify `parameters` block on UdtType.
-- [ ] **Multiple parameters** — two or more params. Verify all appear in `parameters` block.
+- [x] **Single parameter** — one `Param1_Name / Param1_DataType / Param1_Value`. Verify `parameters` block on UdtType.
+- [x] **Multiple parameters** — two or more params. Verify all appear in `parameters` block.
 - [ ] **Parameter with no default value** — leave `Param1_Value` blank. Verify `value` key is omitted (not written as empty string).
-- [ ] **Invalid param datatype** — set `Param1_DataType=Number`. Verify warning logged.
+- [x] **Invalid param datatype** — set `Param1_DataType=Number`. Verify warning logged.
 
 ### 3C — Multiple UDTs
 
-- [ ] **Two UDTs in one sheet** — add a second `:UDTName` block below the first. Verify both UdtType objects appear in the JSON output.
+- [x] **Two UDTs in one sheet** — add a second `:UDTName` block below the first. Verify both UdtType objects appear in the JSON output.
 
 ### 3D — Root format options
 
@@ -135,14 +135,14 @@ python -m ignition_tags convert-udt export.json output.xlsx
 
 ### 4A — Basic round-trip
 
-- [ ] **Round-trip** — run `generate-udt` on your UDT_LIST sheet, then run `convert-udt` on the output JSON. Open the resulting Excel and verify it matches the original sheet structure: section headers, parameters, binding flags, alarm fields.
+- [x] **Round-trip** — run `generate-udt` on your UDT_LIST sheet, then run `convert-udt` on the output JSON. Open the resulting Excel and verify it matches the original sheet structure: section headers, parameters, binding flags, alarm fields.
 - [ ] **Binding flags** — `DocBinding`, `OPCPathBinding`, `EngUnitBinding` should be `TRUE` where bindings exist and blank elsewhere.
-- [ ] **Parameter columns** — `Param1_Name / Param1_DataType / Param1_Value` should round-trip intact.
+- [x] **Parameter columns** — `Param1_Name / Param1_DataType / Param1_Value` should round-trip intact.
 
 ### 4B — Real Ignition UDT export
 
-- [ ] **Export UDT from Ignition** — export an existing UDT type from a real project. Run `convert-udt` on it. Verify the Excel is readable and the sectioned format is correct.
-- [ ] **Re-import round-trip** — take the Excel from above, run `generate-udt`, import back into Ignition, and verify the UDT definition matches the original.
+- [x] **Export UDT from Ignition** — export an existing UDT type from a real project. Run `convert-udt` on it. Verify the Excel is readable and the sectioned format is correct.
+- [x] **Re-import round-trip** — take the Excel from above, run `generate-udt`, import back into Ignition, and verify the UDT definition matches the original.
 
 ---
 
@@ -150,11 +150,11 @@ python -m ignition_tags convert-udt export.json output.xlsx
 
 UDT instances live in the lower section of the `DEVICE_LIST` sheet (`:UDTTagName` header), generated as part of `generate-tags`.
 
-- [ ] **Single instance** — one `:UDTTagName` block with one data row. Verify `tagType: UdtInstance` and `typeId` in output JSON.
-- [ ] **Instance with folder** — populate `Folder` column. Verify instance is placed inside the correct folder in the JSON tree.
-- [ ] **Instance with parameters** — populate `Param1_Name / Param1_Value`. Verify `parameters` block on the instance.
-- [ ] **Missing typeId** — leave `TypeId` blank. Verify warning: *"missing typeId — skipped"*.
-- [ ] **Import into Ignition** — run `generate-tags` on a sheet with both atomic tags and UDT instances. Import the JSON. Verify the tag tree contains both atomic tags and resolved UDT instances.
+- [x] **Single instance** — one `:UDTTagName` block with one data row. Verify `tagType: UdtInstance` and `typeId` in output JSON.
+- [x] **Instance with folder** — populate `Folder` column. Verify instance is placed inside the correct folder in the JSON tree.
+- [x] **Instance with parameters** — populate `Param1_Name / Param1_Value`. Verify `parameters` block on the instance.
+- [x] **Missing typeId** — leave `TypeId` blank. Verify warning: *"missing typeId — skipped"*.
+- [x] **Import into Ignition** — run `generate-tags` on a sheet with both atomic tags and UDT instances. Import the JSON. Verify the tag tree contains both atomic tags and resolved UDT instances.
 
 ---
 
@@ -174,3 +174,6 @@ Use this section to capture anything surprising or broken during testing.
 |4/27  |convert-tags|issue - EngUnit and TagGroup did not convert   | NO   |
 |4/27  |convert-tags|NOTE - alarm mode of "Not Equal" exports as "Inequality"  | na   |
 |4/27  |convert-tags|NOTE - if UDT definitions were included in export json, this command does try to convert them, but it does it poorly  | na   |
+|4/27  |generate-udt|NOTE - if parameter data type is left blank, or has a bad name, in sheet, the value will default to Integer after importing  | na   |
+|4/27  |generate-tags|(generating udt instance) issue - if Folder column is specified for one tag and not for another, the one unspecified will be placed in a "nan" folder | NO  |
+|4/27  |generate-tags|(generating normal tag and udt instance) issue - if DataType does not match expected format exactly (e.g. Int4 [correct] vs int4 [incorrect]), then Ignition will error on import | NO  |
