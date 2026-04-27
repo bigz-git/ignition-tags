@@ -583,6 +583,7 @@ def build_tag_provider(df: pd.DataFrame, provider_name: str, opc_server: str) ->
     logger.info("Built provider '%s' with %d tags", provider_name, count)
     # return {"tagType": "Provider", "name": provider_name, "tags": top_level_tags}
     return {"tags": top_level_tags}
+    # ----------------------------------------------------------------------------------- this is where provider is included in tag import json
 
 _PARAM_DATATYPES = {"integer", "float", "string"}
 

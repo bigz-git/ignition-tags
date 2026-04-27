@@ -13,10 +13,10 @@ Check off each item as you complete it. Add notes inline where useful.
 
 ---
 
-## Command 1 — `generate_tags` (Excel → Provider JSON)
+## Command 1 — `generate-tags` (Excel → Provider JSON)
 
 ```
-python -m ignition_tags generate_tags test_input.xlsx output.json
+python -m ignition_tags generate-tags test_input.xlsx output.json
 ```
 
 ### 1A — Basic tag types (verify JSON shape, then import into Ignition)
@@ -54,43 +54,43 @@ python -m ignition_tags generate_tags test_input.xlsx output.json
 ### 1E — Provider / OPC server options
 
 - [ ] **Custom provider name** — run with `--provider MySite`. Verify no name field is unexpectedly missing in JSON (currently the provider name is not written to JSON — confirm this is expected).
-- [ ] **Custom OPC server** — run with `--opc-server "My OPC Server"`. Verify `opcServer` field matches on all OPC tags.
+- [x] **Custom OPC server** — run with `--opc-server "My OPC Server"`. Verify `opcServer` field matches on all OPC tags.
 
 ### 1F — Error handling (these should print a clean message, not a Python traceback)
 
-- [ ] **Missing name column** — delete the `:TagName` / `name` header from the sheet. Verify error: *"No tag name column found in DEVICE_LIST sheet. Expected one of…"*
-- [ ] **Blank name row** — add a row with no name. Verify warning: *"Row X: name is blank — row will be skipped"*. Confirm the row is skipped, not a crash.
+- [x] **Missing name column** — delete the `:TagName` / `name` header from the sheet. Verify error: *"No tag name column found in DEVICE_LIST sheet. Expected one of…"*
+- [x] **Blank name row** — add a row with no name. Verify warning: *"Row X: name is blank — row will be skipped"*. Confirm the row is skipped, not a crash.
 - [ ] **Invalid datatype** — set `datatype=BADTYPE`. Verify warning: *"unrecognised datatype 'BADTYPE'"*. Confirm tag is still written (with BADTYPE preserved).
-- [ ] **Duplicate tag path** — add two rows with identical `folder` + `name`. Verify warning: *"duplicate tag path"*.
-- [ ] **valueSource=opc, no opcpath** — set `valuesource=opc`, leave `opcpath` blank. Verify warning: *"valueSource is 'opc' but opcpath is blank"*.
-- [ ] **Wrong sheet name** — rename `DEVICE_LIST` sheet to something else. Verify clean error, not traceback.
-- [ ] **File not found** — run with a path that doesn't exist. Verify clean error.
+- [x] **Duplicate tag path** — add two rows with identical `folder` + `name`. Verify warning: *"duplicate tag path"*.
+- [x] **valueSource=opc, no opcpath** — set `valuesource=opc`, leave `opcpath` blank. Verify warning: *"valueSource is 'opc' but opcpath is blank"*.
+- [x] **Wrong sheet name** — rename `DEVICE_LIST` sheet to something else. Verify clean error, not traceback.
+- [x] **File not found** — run with a path that doesn't exist. Verify clean error.
 
 ---
 
-## Command 2 — `convert_tags` (Ignition JSON → Excel)
+## Command 2 — `convert-tags` (Ignition JSON → Excel)
 
 ```
-python -m ignition_tags convert_tags export.json output.xlsx
+python -m ignition_tags convert-tags export.json output.xlsx
 ```
 
 ### 2A — Basic round-trip
 
-- [ ] **Round-trip** — run `generate_tags` on your test sheet, then run `convert_tags` on the output JSON, open the resulting Excel and confirm all rows and values match the original. Pay attention to: folder paths, datatypes, opcpath, alarm fields.
+- [ ] **Round-trip** — run `generate-tags` on your test sheet, then run `convert-tags` on the output JSON, open the resulting Excel and confirm all rows and values match the original. Pay attention to: folder paths, datatypes, opcpath, alarm fields.
 - [ ] **Folders preserved** — tags nested in folders should have the correct folder path in the output Excel.
 - [ ] **Alarms preserved** — alarm fields should round-trip intact.
 
 ### 2B — Real Ignition export
 
-- [ ] **Export from Ignition** — export an existing tag tree from a real project as JSON. Run `convert_tags` on it. Verify the Excel output is readable and correct. (Tags with multiple alarms will only show the first alarm — confirm this is acceptable.)
-- [ ] **Re-import round-trip** — take the Excel from the step above, run `generate_tags` on it, import back into Ignition, and verify the tag tree matches the original.
+- [ ] **Export from Ignition** — export an existing tag tree from a real project as JSON. Run `convert-tags` on it. Verify the Excel output is readable and correct. (Tags with multiple alarms will only show the first alarm — confirm this is acceptable.)
+- [ ] **Re-import round-trip** — take the Excel from the step above, run `generate-tags` on it, import back into Ignition, and verify the tag tree matches the original.
 
 ---
 
-## Command 3 — `generate_udt` (Excel UDT_LIST → UDT JSON)
+## Command 3 — `generate-udt` (Excel UDT_LIST → UDT JSON)
 
 ```
-python -m ignition_tags generate_udt test_input.xlsx output.json --top-name _types_ --format folder_root
+python -m ignition_tags generate-udt test_input.xlsx output.json --top-name _types_ --format folder_root
 ```
 
 ### 3A — Basic UDT
@@ -127,34 +127,34 @@ python -m ignition_tags generate_udt test_input.xlsx output.json --top-name _typ
 
 ---
 
-## Command 4 — `convert_udt` (Ignition UDT JSON → Excel)
+## Command 4 — `convert-udt` (Ignition UDT JSON → Excel)
 
 ```
-python -m ignition_tags convert_udt export.json output.xlsx
+python -m ignition_tags convert-udt export.json output.xlsx
 ```
 
 ### 4A — Basic round-trip
 
-- [ ] **Round-trip** — run `generate_udt` on your UDT_LIST sheet, then run `convert_udt` on the output JSON. Open the resulting Excel and verify it matches the original sheet structure: section headers, parameters, binding flags, alarm fields.
+- [ ] **Round-trip** — run `generate-udt` on your UDT_LIST sheet, then run `convert-udt` on the output JSON. Open the resulting Excel and verify it matches the original sheet structure: section headers, parameters, binding flags, alarm fields.
 - [ ] **Binding flags** — `DocBinding`, `OPCPathBinding`, `EngUnitBinding` should be `TRUE` where bindings exist and blank elsewhere.
 - [ ] **Parameter columns** — `Param1_Name / Param1_DataType / Param1_Value` should round-trip intact.
 
 ### 4B — Real Ignition UDT export
 
-- [ ] **Export UDT from Ignition** — export an existing UDT type from a real project. Run `convert_udt` on it. Verify the Excel is readable and the sectioned format is correct.
-- [ ] **Re-import round-trip** — take the Excel from above, run `generate_udt`, import back into Ignition, and verify the UDT definition matches the original.
+- [ ] **Export UDT from Ignition** — export an existing UDT type from a real project. Run `convert-udt` on it. Verify the Excel is readable and the sectioned format is correct.
+- [ ] **Re-import round-trip** — take the Excel from above, run `generate-udt`, import back into Ignition, and verify the UDT definition matches the original.
 
 ---
 
 ## Command 5 — UDT instances in DEVICE_LIST
 
-UDT instances live in the lower section of the `DEVICE_LIST` sheet (`:UDTTagName` header), generated as part of `generate_tags`.
+UDT instances live in the lower section of the `DEVICE_LIST` sheet (`:UDTTagName` header), generated as part of `generate-tags`.
 
 - [ ] **Single instance** — one `:UDTTagName` block with one data row. Verify `tagType: UdtInstance` and `typeId` in output JSON.
 - [ ] **Instance with folder** — populate `Folder` column. Verify instance is placed inside the correct folder in the JSON tree.
 - [ ] **Instance with parameters** — populate `Param1_Name / Param1_Value`. Verify `parameters` block on the instance.
 - [ ] **Missing typeId** — leave `TypeId` blank. Verify warning: *"missing typeId — skipped"*.
-- [ ] **Import into Ignition** — run `generate_tags` on a sheet with both atomic tags and UDT instances. Import the JSON. Verify the tag tree contains both atomic tags and resolved UDT instances.
+- [ ] **Import into Ignition** — run `generate-tags` on a sheet with both atomic tags and UDT instances. Import the JSON. Verify the tag tree contains both atomic tags and resolved UDT instances.
 
 ---
 
@@ -164,8 +164,13 @@ Use this section to capture anything surprising or broken during testing.
 
 | Date | Command | Finding | Resolved? |
 |------|---------|---------|-----------|
-|4/27  |generate-tags|entering an undefined tag group will import as entered wihtout error even if tag group is undefined   | na   |
-|4/27  |generate-tags|alarm priority must start with capital letter. options are Diagnostic, Low, Medium, High, and Critical| no|
-|4/27  |generate-tags|alarm mode must start with capital letter. If it doesnt match available options exactly, it will default to "Equal". There are many options available, but for the purpose of this tool, these should be used: Equal, Not Equal, When True, and When False. These options work for Boolean alarms, this can be expanded later| no|
-|4/27  |generate-tags|alarm setpoint column can work with 0 or "FALSE" and 1 or "TRUE"   | na   |
-|4/27  |generate-tags|when defining a folder structure, the structure can either be defined in the :TagName column with the "folder/subfolder/tagname" format OR in the Folder column using "folder/subfolder" but not both  | na   |
+|4/27  |generate-tags|NOTE - entering an undefined tag group will import as entered wihtout error even if tag group is undefined   | na   |
+|4/27  |generate-tags|ISSUE - alarm priority must start with capital letter. options are Diagnostic, Low, Medium, High, and Critical| NO|
+|4/27  |generate-tags|ISSUE - alarm mode must start with capital letter. If it doesnt match available options exactly, it will default to "Equal". There are many options available, but for the purpose of this tool, these should be used: Equal, Not Equal, When True, and When False. These options work for Boolean alarms, this can be expanded later| NO|
+|4/27  |generate-tags|NOTE - alarm setpoint column can work with 0 or "FALSE" and 1 or "TRUE"   | na   |
+|4/27  |generate-tags|NOTE - when defining a folder structure, the structure can either be defined in the :TagName column with the "folder/subfolder/tagname" format OR in the Folder column using "folder/subfolder" but not both  | na   |
+|4/27  |generate-tags|NOTE - the --provider NAME flag is not working yet. Commented out in "build_tag_provider" function of core.py. UPDATE - an export json for "default" provider shows that the name is left blank ("name": "",) | na   |
+|4/27  |generate-tags|issue - data type error checking works, and suggests the correct valid data types when incorrect data type is entered. However, the data type name needs proper capitalization or Ignition will error on import (e.g. DataSet [correct] vs. dataset [incorrect]), and the error message suggests the un-capitalized versions  | NO   |
+|4/27  |convert-tags|issue - EngUnit and TagGroup did not convert   | NO   |
+|4/27  |convert-tags|NOTE - alarm mode of "Not Equal" exports as "Inequality"  | na   |
+|4/27  |convert-tags|NOTE - if UDT definitions were included in export json, this command does try to convert them, but it does it poorly  | na   |
