@@ -164,4 +164,6 @@ Use this section to capture anything surprising or broken during testing.
 
 | Date | Command | Finding | Resolved? |
 |------|---------|---------|-----------|
-|4/27  |generate-tags         |entering an undefined tag group will import as entered wihtout error evein if tag group is undefined         | na          |
+|4/27  |generate-tags         |entering an undefined tag group will import as entered wihtout error even if tag group is undefined         | na          |
+|4/27  |generate-tags|alarm priority must start with capital letter. options are Diagnostic, Low, Medium, High, and Critical| no|
+
