@@ -23,6 +23,7 @@ import sys
 
 import pandas as pd
 
+from . import __version__
 from .columns import TAG_IMPORT_SHEET, UDT_IMPORT_SHEET
 import openpyxl
 
@@ -109,6 +110,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ignition_tags",
         description="Ignition SCADA tag import/export tool",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
     parser.add_argument(
         "-v", "--verbose",

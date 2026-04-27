@@ -1,9 +1,8 @@
 # ignition-tags
 
 A command-line tool for bidirectional conversion between Excel spreadsheets and
-Ignition SCADA system JSON tag configurations.  Used by industrial automation
-engineers to bulk-create and export tag hierarchies without clicking through
-Ignition's designer one tag at a time.
+Ignition SCADA system JSON tag configurations.  Used to bulk-create and export 
+tag hierarchies without clicking through Ignition's designer one tag at a time.
 
 ## Features
 
