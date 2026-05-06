@@ -13,7 +13,7 @@ tag hierarchies without clicking through Ignition's designer one tag at a time.
   `DEVICE_LIST` sheet for editing.  Output column names match the import format
   exactly, so the round-trip works without manual cleanup.
 - **Excel -> UDT JSON** — convert a `UDT_LIST` sheet into a UDT type definition
-  JSON with optional OPC parameter binding.
+  JSON with optional parameter binding on any field.
 - **UDT JSON -> Excel** — flatten an Ignition UDT JSON export back into a
   `UDT_LIST` sheet.
 
@@ -178,14 +178,17 @@ per UDT block:
 - `:UDTName` row — one data row per UDT type.  Columns: `UDTName`,
   `Documentation`, `Param1_Name`, `Param1_DataType`, `Param1_Value`, `Param2_*`, …
 - `:TagName` row — one data row per tag in the UDT above.  Columns:
-  `TagName`, `DocBinding`, `Documentation`, `ValueSource`, `DataType`, `Value`,
-  `OPCPathBinding`, `OPCPath`, `EngUnitBinding`, `EngUnit`, `EngHigh`, `EngLow`,
+  `TagName`, `Documentation`, `ValueSource`, `DataType`, `Value`,
+  `OPCPath`, `EngUnit`, `EngHigh`, `EngLow`,
   `ReadOnly`, `AlarmName`, `AlarmPriority`, `AlarmLabel`, `AlarmNotes`,
   `AlarmMode`, `AlarmSetpoint`, `AlarmDisplayPath`
 
-`DocBinding`, `OPCPathBinding`, and `EngUnitBinding` are boolean columns: when
-`TRUE`, the corresponding field is written as a parameter binding
-`{"bindType": "parameter", "binding": <value>}` instead of a plain string.
+**Parameter binding** — any cell value that contains `{` and `}` is automatically
+written as a parameter binding (`{"bindType": "parameter", "binding": <value>}`)
+instead of a plain string.  This works for any field: `OPCPath`, `Documentation`,
+`EngUnit`, `EngHigh`, `EngLow`, etc.  For example, entering `{PLC}{TagPath}` in
+the `OPCPath` column produces a bound OPC path that resolves at instance
+creation time using the UDT's parameters.
 
 ### UDT JSON -> Excel
 
@@ -195,7 +198,9 @@ ignition-tags convert-udt export.json output.xlsx
 
 Reads an Ignition UDT JSON export and writes a `UDT_LIST` sheet in the sectioned
 format above.  Accepts any root shape: a single `UdtType`, `folder_root`,
-`wrapped_tags`, or `tags_only`.
+`wrapped_tags`, or `tags_only`.  Parameter-bound fields are written back as their
+binding string (e.g. `{PLC}{TagPath}`), so the round-trip preserves bindings
+without any extra columns.
 
 ### Excel -> UDT Instances
 

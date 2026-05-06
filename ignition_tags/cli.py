@@ -108,7 +108,7 @@ def cmd_excel_to_udt(args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="ignition_tags",
+        prog="ignition-tags",
         description="Ignition SCADA tag import/export tool",
     )
     parser.add_argument(
