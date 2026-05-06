@@ -41,6 +41,63 @@ class _TextLogHandler(logging.Handler):
         self._widget.configure(state="disabled")
 
 
+# ── Column reference data ──────────────────────────────────────────────────────
+# Each tuple: (Excel column name, Required, Description)
+
+_DEVICE_LIST_COLUMNS = [
+    ("name",             "Yes", "Tag name; may contain / to encode a folder path"),
+    ("folder",           "No",  "Folder path, e.g. Line1/Station2"),
+    ("datatype",         "No",  "Ignition data type: Float4, Int4, Boolean, String, … (default Float4)"),
+    ("value",            "No",  "Default value for memory tags"),
+    ("opcpath",          "No",  "OPC item path — presence makes tag OPC-connected"),
+    ("valuesource",      "No",  "Explicit value source override: opc or memory"),
+    ("readonly",         "No",  "Mark tag read-only: true / 1 / yes"),
+    ("documentation",    "No",  "Long description text"),
+    ("tooltip",          "No",  "Short tooltip text"),
+    ("engunit",          "No",  "Engineering unit label"),
+    ("englow",           "No",  "Engineering low limit"),
+    ("enghigh",          "No",  "Engineering high limit"),
+    ("taggroup",         "No",  "Tag group name"),
+    ("alarmname",        "No",  "Alarm name — required to create an alarm sub-object"),
+    ("alarmlabel",       "No",  "Alarm display label"),
+    ("alarmmode",        "No",  "Alarm mode, e.g. AboveSetpoint"),
+    ("alarmsetpoint",    "No",  "Alarm setpoint value (numeric)"),
+    ("alarmpriority",    "No",  "Alarm priority"),
+    ("alarmnotes",       "No",  "Alarm notes"),
+    ("alarmdisplaypath", "No",  "Alarm display path"),
+]
+
+# :UDTName section — one data row per UDT type
+_UDT_NAME_COLUMNS = [
+    ("UDTName",        "Yes", "UDT type name"),
+    ("Documentation",  "No",  "UDT type description"),
+    ("Param1_Name",    "No",  "Parameter name (repeat as Param2_Name, Param3_Name, …)"),
+    ("Param1_DataType","No",  "Parameter data type: Integer, Float, or String"),
+    ("Param1_Value",   "No",  "Parameter default value (optional)"),
+]
+
+# :TagName section — one data row per tag in the UDT above
+_UDT_TAG_COLUMNS = [
+    ("TagName",         "Yes", "Tag name within the UDT"),
+    ("Documentation",   "No",  "Tag description; supports {Param} binding"),
+    ("ValueSource",     "No",  "memory or opc — inferred from OPCPath when omitted"),
+    ("DataType",        "No",  "Ignition data type: Float4, Int4, Boolean, String, …"),
+    ("Value",           "No",  "Default value for memory tags"),
+    ("OPCPath",         "No",  "OPC item path; supports {Param} binding"),
+    ("EngUnit",         "No",  "Engineering unit label; supports {Param} binding"),
+    ("EngHigh",         "No",  "Engineering high limit; supports {Param} binding"),
+    ("EngLow",          "No",  "Engineering low limit; supports {Param} binding"),
+    ("ReadOnly",        "No",  "Mark tag read-only: true / 1 / yes"),
+    ("AlarmName",       "No",  "Alarm name — required to create an alarm sub-object"),
+    ("AlarmPriority",   "No",  "Alarm priority"),
+    ("AlarmLabel",      "No",  "Alarm display label"),
+    ("AlarmNotes",      "No",  "Alarm notes"),
+    ("AlarmMode",       "No",  "Alarm mode, e.g. AboveSetpoint"),
+    ("AlarmSetpoint",   "No",  "Alarm setpoint value (numeric)"),
+    ("AlarmDisplayPath","No",  "Alarm display path"),
+]
+
+
 class IgnitionTagsGUI(tk.Tk):
     _XLSX = [("Excel files", "*.xlsx"), ("All files", "*.*")]
     _JSON = [("JSON files", "*.json"), ("All files", "*.*")]
@@ -56,11 +113,21 @@ class IgnitionTagsGUI(tk.Tk):
     # ── Top-level layout ───────────────────────────────────────────────────────
 
     def _build_ui(self) -> None:
+        self._build_menu()
         notebook = ttk.Notebook(self)
         notebook.pack(fill="x", padx=8, pady=8)
         self._build_tags_tab(notebook)
         self._build_udts_tab(notebook)
         self._build_log_panel()
+
+    def _build_menu(self) -> None:
+        menubar = tk.Menu(self)
+        self.configure(menu=menubar)
+        help_menu = tk.Menu(menubar, tearoff=False)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="Column Reference…", command=self._show_column_reference)
+        help_menu.add_separator()
+        help_menu.add_command(label="About…", command=self._show_about)
 
     def _build_tags_tab(self, notebook: ttk.Notebook) -> None:
         tab = ttk.Frame(notebook, padding=4)
@@ -169,6 +236,79 @@ class IgnitionTagsGUI(tk.Tk):
     def _on_close(self) -> None:
         logging.getLogger("ignition_tags").removeHandler(self._log_handler)
         self.destroy()
+
+    # ── Help dialogs ───────────────────────────────────────────────────────────
+
+    def _show_column_reference(self) -> None:
+        win = tk.Toplevel(self)
+        win.title("Column Reference")
+        win.minsize(720, 480)
+        win.grab_set()
+
+        nb = ttk.Notebook(win)
+        nb.pack(fill="both", expand=True, padx=8, pady=8)
+
+        # DEVICE_LIST tab
+        tag_tab = ttk.Frame(nb, padding=4)
+        nb.add(tag_tab, text="DEVICE_LIST")
+        self._column_treeview(tag_tab, _DEVICE_LIST_COLUMNS, expand=True)
+
+        # UDT_LIST tab
+        udt_tab = ttk.Frame(nb, padding=4)
+        nb.add(udt_tab, text="UDT_LIST")
+
+        ttk.Label(udt_tab, text=":UDTName section — one row per UDT type",
+                  font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(0, 2))
+        self._column_treeview(udt_tab, _UDT_NAME_COLUMNS, expand=False)
+
+        ttk.Label(udt_tab, text=":TagName section — one row per tag in the UDT above",
+                  font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(8, 2))
+        self._column_treeview(udt_tab, _UDT_TAG_COLUMNS, expand=True)
+
+        ttk.Label(udt_tab, text="Tip: any cell value containing { } is automatically written as a parameter binding.",
+                  foreground="gray").pack(anchor="w", pady=(6, 0))
+
+        ttk.Button(win, text="Close", command=win.destroy).pack(pady=(0, 8))
+
+    def _show_about(self) -> None:
+        messagebox.showinfo(
+            "About Ignition Tags Tool",
+            f"Ignition Tags Tool  v{__version__}\n\n"
+            "Bidirectional conversion between Excel spreadsheets\n"
+            "and Ignition SCADA tag configuration JSON.\n\n"
+            "Commands:\n"
+            "  generate-tags  —  Excel DEVICE_LIST → Provider JSON\n"
+            "  convert-tags   —  Provider JSON → Excel DEVICE_LIST\n"
+            "  generate-udt   —  Excel UDT_LIST → UDT JSON\n"
+            "  convert-udt    —  UDT JSON → Excel UDT_LIST\n"
+            "  gui            —  Launch this window",
+            parent=self,
+        )
+
+    @staticmethod
+    def _column_treeview(parent, rows, expand=True) -> None:
+        cols = ("Column", "Required", "Description")
+        frame = ttk.Frame(parent)
+        frame.pack(fill="both", expand=expand)
+
+        tree = ttk.Treeview(
+            frame, columns=cols, show="headings", selectmode="browse",
+            height=len(rows),
+        )
+        tree.heading("Column",      text="Column")
+        tree.heading("Required",    text="Required")
+        tree.heading("Description", text="Description")
+        tree.column("Column",      width=155, minwidth=120, stretch=False)
+        tree.column("Required",    width=70,  minwidth=60,  stretch=False, anchor="center")
+        tree.column("Description", width=450, minwidth=200, stretch=True)
+
+        for row in rows:
+            tree.insert("", tk.END, values=row)
+
+        scroll = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scroll.set)
+        tree.pack(side="left", fill="both", expand=True)
+        scroll.pack(side="right", fill="y")
 
     # ── Layout helpers ─────────────────────────────────────────────────────────
 
