@@ -19,19 +19,83 @@ tag hierarchies without clicking through Ignition's designer one tag at a time.
 
 ## Setup
 
-Requires Python 3.10+.
+### 1. Install Git
 
-```bash
+Git is required to download and keep the tool up to date.
+
+1. Download the installer from **https://git-scm.com/download/win** and run it.
+2. Accept the defaults throughout — no options need to be changed.
+3. Open a new **Command Prompt** or **PowerShell** window and verify:
+
+```
+git --version
+```
+
+You should see output like `git version 2.x.x`.
+
+---
+
+### 2. Install Python
+
+Python 3.10 or newer is required.
+
+1. Download the installer from **https://www.python.org/downloads/** (click the big yellow button for the latest release).
+2. Run the installer. **Before clicking Install Now, check the box that says "Add Python to PATH"** — this is unchecked by default and the tool will not work without it.
+3. Open a new **Command Prompt** or **PowerShell** window and verify:
+
+```
+python --version
+```
+
+You should see output like `Python 3.x.x`.  If you see `'python' is not recognized`, the PATH box was not checked — re-run the installer, choose "Modify", and enable "Add Python to environment variables".
+
+---
+
+### 3. Clone the repository
+
+Open **Command Prompt** or **PowerShell**, navigate to a folder where you want to store the tool (e.g. `cd C:\Tools`), then run:
+
+```
 git clone <repo-url>
 cd ignition-tags
+```
 
+Replace `<repo-url>` with the URL provided by whoever shared the repo.
+
+---
+
+### 4. Create and activate a virtual environment
+
+A virtual environment keeps the tool's dependencies isolated from the rest of your system.
+
+```
 python -m venv .venv
 .venv\Scripts\activate
+```
 
+After activation your prompt will show `(.venv)` at the beginning.  **You must activate the environment every time you open a new terminal window before using the tool.**
+
+---
+
+### 5. Install the tool
+
+With the virtual environment active:
+
+```
 pip install -e .
 ```
 
-The `-e` flag installs in editable mode — after a `git pull` to get updates, no reinstall is needed.
+The `-e` flag installs in editable mode.  When updates are available, run `git pull` inside the `ignition-tags` folder — no reinstall is needed.
+
+---
+
+### 6. Verify the install
+
+```
+ignition-tags --version
+```
+
+You should see the version number printed.  If you see `'ignition-tags' is not recognized`, make sure you activated the virtual environment (step 4).
 
 ## Usage
 

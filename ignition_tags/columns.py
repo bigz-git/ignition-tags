@@ -25,6 +25,7 @@ TAG_SCALAR_FIELDS = {
     "tooltip":       "tooltip",
     "engunit":       "engUnit",
     "taggroup":      "tagGroup",
+    
 }
 
 # Engineering-range fields.  Excel column -> Ignition JSON key (camelCase).
