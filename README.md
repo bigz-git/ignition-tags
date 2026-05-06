@@ -16,26 +16,21 @@ tag hierarchies without clicking through Ignition's designer one tag at a time.
   JSON with optional parameter binding on any field.
 - **UDT JSON -> Excel** — flatten an Ignition UDT JSON export back into a
   `UDT_LIST` sheet.
+- **Graphical user interface** — Tkinter GUI wrapping all four operations; launch
+  with `ignition-tags gui`.
 
 ## Setup
 
-### 1. Install Git
+Choose the installation method that fits your situation:
 
-Git is required to download and keep the tool up to date.
-
-1. Download the installer from **https://git-scm.com/download/win** and run it.
-2. Accept the defaults throughout — no options need to be changed.
-3. Open a new **Command Prompt** or **PowerShell** window and verify:
-
-```
-git --version
-```
-
-You should see output like `git version 2.x.x`.
+- **[Install from release](#install-from-release-recommended)** — you just want to use the tool.  No Git required.
+- **[Developer setup](#developer-setup-clone-from-source)** — you want to modify the code or contribute changes.
 
 ---
 
-### 2. Install Python
+### Install from release (recommended)
+
+#### Step 1 — Install Python
 
 Python 3.10 or newer is required.
 
@@ -51,25 +46,74 @@ You should see output like `Python 3.x.x`.  If you see `'python' is not recogniz
 
 ---
 
-### 3. Clone the repository
+#### Step 2 — Download the wheel file
+
+1. Go to the [Releases](https://github.com/bigz-git/ignition-tags/releases) page of this repository.
+2. Under the latest release, download the file that ends in `.whl` (for example `ignition_tags-1.0.0-py3-none-any.whl`).
+3. Save it somewhere easy to find, such as your `Downloads` folder.
+
+---
+
+#### Step 3 — Install the wheel
+
+Open **Command Prompt** or **PowerShell** and run the following command, replacing the path and filename with wherever you saved the file:
+
+```
+pip install C:\Users\YourName\Downloads\ignition_tags-X.X.X-py3-none-any.whl
+```
+
+pip will automatically install `pandas` and `openpyxl` as well.  You only need to do this once (or repeat when a new release is available).
+
+---
+
+#### Step 4 — Verify the install
+
+```
+ignition-tags --version
+```
+
+You should see the version number printed.  If you see `'ignition-tags' is not recognized`, close your terminal, open a new one, and try again — the PATH update from the Python installer sometimes requires a fresh window.
+
+> **Updating to a new version** — download the new `.whl` from the Releases page and re-run the `pip install` command.  The `--upgrade` flag is not needed; pip will replace the old version automatically.
+
+---
+
+### Developer setup (clone from source)
+
+This path requires Git and keeps the tool in editable mode so code changes take effect immediately.
+
+#### Step 1 — Install Git
+
+1. Download the installer from **https://git-scm.com/download/win** and run it.
+2. Accept the defaults throughout — no options need to be changed.
+3. Open a new **Command Prompt** or **PowerShell** window and verify:
+
+```
+git --version
+```
+
+You should see output like `git version 2.x.x`.
+
+---
+
+#### Step 2 — Install Python
+
+Same as [Step 1 above](#step-1--install-python).
+
+---
+
+#### Step 3 — Clone the repository
 
 Open **Command Prompt** or **PowerShell**, navigate to a folder where you want to store the tool (e.g. `cd C:\Tools`), then run:
 
 ```
 git clone https://github.com/bigz-git/ignition-tags.git
-```
-
-After the repository is cloned, navigate to the newly created directory with:
-
-```
 cd ignition-tags
 ```
 
 ---
 
-### 4. Create and activate a virtual environment
-
-A virtual environment keeps the tool's dependencies isolated from the rest of your system.
+#### Step 4 — Create and activate a virtual environment
 
 ```
 python -m venv .venv
@@ -80,7 +124,7 @@ After activation your prompt will show `(.venv)` at the beginning.  **You must a
 
 ---
 
-### 5. Install the tool
+#### Step 5 — Install in editable mode
 
 With the virtual environment active:
 
@@ -88,11 +132,11 @@ With the virtual environment active:
 pip install -e .
 ```
 
-The `-e` flag installs in editable mode.  When updates are available, run `git pull` inside the `ignition-tags` folder — no reinstall is needed.
+When updates are available, run `git pull` inside the `ignition-tags` folder — no reinstall is needed.
 
 ---
 
-### 6. Verify the install
+#### Step 6 — Verify the install
 
 ```
 ignition-tags --version
@@ -103,6 +147,18 @@ You should see the version number printed.  If you see `'ignition-tags' is not r
 ## Usage
 
 Activate the venv first (`.venv\Scripts\activate`), then use the `ignition-tags` command.  Use `-v` for verbose/debug output.
+
+### Graphical User Interface
+
+```bash
+ignition-tags gui
+```
+
+Opens a two-tab Tkinter window.  Each tab exposes both directions of conversion
+for its domain (Tags or UDTs): file pickers for input and output, optional
+parameter fields, a run button, and a scrollable output panel that shows warnings
+and success messages.  Use **Help → Column Reference** to browse the supported
+column names for both sheet types without leaving the window.
 
 ### Excel -> Ignition Provider JSON
 
@@ -135,6 +191,7 @@ column header.  Supported columns:
 | `engunit` | no | Engineering unit label |
 | `englow` | no | Engineering low limit |
 | `enghigh` | no | Engineering high limit |
+| `taggroup` | no | Tag group name |
 | `alarmname` | no | Alarm name — presence of this field triggers alarm creation |
 | `alarmlabel` | no | Alarm display label |
 | `alarmmode` | no | Alarm mode (e.g. `AboveSetpoint`) |
@@ -228,7 +285,7 @@ ignition_tags/          Python package (CLI + library)
   columns.py            Column schema dicts — edit here to add/rename columns
   core.py               Pure conversion functions (no file I/O, no UI)
   cli.py                Argparse entry point and command handlers
-  gui.py                GUI placeholder (not yet implemented)
+  gui.py                Tkinter GUI — launch with `ignition-tags gui`
   __init__.py           Public API re-exports for scripting/GUI use
   __main__.py           Enables ignition-tags
 
@@ -263,14 +320,11 @@ or `UDT_TAG_FIELDS`).  The processing loop picks it up automatically.
 block, and write a `cmd_*` function that reads a file, calls a core function,
 and writes the result.
 
-**Build the GUI** — import from the package and wrap with Tkinter dialogs:
-
-```python
-from ignition_tags import build_tag_provider, build_udt_types, flatten_tags
-```
-
-See `ignition_tags/gui.py` for the starting point and
-`archive/ignition_tag_tool_r9.py` for the original GUI as a reference.
+**Extend the GUI** — `ignition_tags/gui.py` imports directly from `core.py`.
+Add new sections inside `_build_tags_tab` or `_build_udts_tab`, or add a new
+tab to the `ttk.Notebook` in `_build_ui`.  Update `_DEVICE_LIST_COLUMNS`,
+`_UDT_NAME_COLUMNS`, or `_UDT_TAG_COLUMNS` at the top of `gui.py` to keep
+the column reference dialog in sync.
 
 ## TODO
 
@@ -284,5 +338,6 @@ See `ignition_tags/gui.py` for the starting point and
   `ignition-tags --version`.
 - [ ] **Nested UDTs** — support for UDT types that contain other UDT instances as
   members (requires redesigning the `UDT_LIST` sheet format).
-- [ ] **GUI** — implement `ignition_tags/gui.py` as a Tkinter front-end using the
-  existing public API (`build_tag_provider`, `build_udt_types`, `flatten_tags`).
+- [x] **GUI** — Tkinter front-end in `ignition_tags/gui.py`; launch with
+  `ignition-tags gui`.  Two-tab layout (Tags / UDTs), scrollable output panel
+  with color-coded warnings, and a built-in column reference dialog.

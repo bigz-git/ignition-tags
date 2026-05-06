@@ -5,4 +5,7 @@ __pycache__/
 *.pyc
 *.csv
 json_files/
+dist/
+build/
+*.egg-info/
 
