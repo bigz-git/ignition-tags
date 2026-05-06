@@ -56,11 +56,14 @@ You should see output like `Python 3.x.x`.  If you see `'python' is not recogniz
 Open **Command Prompt** or **PowerShell**, navigate to a folder where you want to store the tool (e.g. `cd C:\Tools`), then run:
 
 ```
-git clone <repo-url>
-cd ignition-tags
+git clone https://github.com/bigz-git/ignition-tags.git
 ```
 
-Replace `<repo-url>` with the URL provided by whoever shared the repo.
+After the repository is cloned, navigate to the newly created directory with:
+
+```
+cd ignition-tags
+```
 
 ---
 
