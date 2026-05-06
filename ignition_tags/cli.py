@@ -42,6 +42,12 @@ logger = logging.getLogger(__name__)
 
 # ── Command handlers ───────────────────────────────────────────────────────────
 
+def cmd_gui(args: argparse.Namespace) -> None:
+    """Launch the Tkinter GUI."""
+    from .gui import launch_gui
+    launch_gui()
+
+
 def cmd_excel_to_json(args: argparse.Namespace) -> None:
     """Excel DEVICE_LIST sheet -> Ignition Provider JSON."""
     raw_df = pd.read_excel(args.input, sheet_name=TAG_IMPORT_SHEET, header=None)
@@ -192,7 +198,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("input",  help="Input UDT JSON file")
     p.add_argument("output", help="Output Excel file (.xlsx)")
     p.set_defaults(func=cmd_udt_to_excel)
-    
+
+    # ── gui ────────────────────────────────────────────────────────────────────
+    p = sub.add_parser("gui", help="Launch the graphical user interface")
+    p.set_defaults(func=cmd_gui)
+
     return parser
 
 

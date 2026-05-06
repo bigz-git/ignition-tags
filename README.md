@@ -240,7 +240,7 @@ requirements.txt        Dependencies list (pandas, openpyxl)
 
 ## Public API
 
-The three core functions are importable directly for scripting or GUI use:
+The core functions are importable directly for scripting or GUI use:
 
 ```python
 from ignition_tags import (
