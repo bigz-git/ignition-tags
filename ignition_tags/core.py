@@ -232,10 +232,14 @@ def _apply_udt_field(tag: dict, excel_col: str, json_key: str, val) -> None:
     elif excel_col == "value":
         tag[json_key] = _try_numeric(val)
     elif excel_col in ("enghigh", "englow"):
-        try:
-            tag[json_key] = float(val)
-        except (ValueError, TypeError):
-            pass
+        s = str(val).strip()
+        if "{" in s and "}" in s:
+            tag[json_key] = s
+        else:
+            try:
+                tag[json_key] = float(val)
+            except (ValueError, TypeError):
+                pass
     else:
         v = str(val).strip()
         if v:
@@ -338,9 +342,11 @@ def _udt_to_rows(udt: dict) -> list[list]:
         if tag.get("tagType") != "AtomicTag":
             continue
 
-        doc, _ = _unpack_binding(tag.get("documentation", ""))
-        eu, _  = _unpack_binding(tag.get("engUnit", ""))
-        opc, _ = _unpack_binding(tag.get("opcItemPath", ""))
+        doc, _    = _unpack_binding(tag.get("documentation", ""))
+        eu, _     = _unpack_binding(tag.get("engUnit", ""))
+        opc, _    = _unpack_binding(tag.get("opcItemPath", ""))
+        enghigh, _ = _unpack_binding(tag.get("engHigh", ""))
+        englow, _  = _unpack_binding(tag.get("engLow", ""))
         alarm = (tag.get("alarms") or [{}])[0]
 
         rows.append([
@@ -351,8 +357,8 @@ def _udt_to_rows(udt: dict) -> list[list]:
             "" if tag.get("value") is None else tag["value"],
             opc,
             eu,
-            tag.get("engHigh", ""),
-            tag.get("engLow", ""),
+            enghigh,
+            englow,
             "TRUE" if tag.get("readOnly") else "",
             alarm.get("name", ""),
             alarm.get("priority", ""),
