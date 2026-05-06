@@ -327,8 +327,8 @@ def _udt_to_rows(udt: dict) -> list[list]:
 
     # :TagName header row — fixed column set
     rows.append([
-        ":TagName", "DocBinding", "Documentation", "ValueSource", "DataType", "Value",
-        "OPCPathBinding", "OPCPath", "EngUnitBinding", "EngUnit", "EngHigh", "EngLow",
+        ":TagName", "Documentation", "ValueSource", "DataType", "Value",
+        "OPCPath", "EngUnit", "EngHigh", "EngLow",
         "ReadOnly", "AlarmName", "AlarmPriority", "AlarmLabel", "AlarmNotes",
         "AlarmMode", "AlarmSetpoint", "AlarmDisplayPath",
     ])
@@ -338,21 +338,18 @@ def _udt_to_rows(udt: dict) -> list[list]:
         if tag.get("tagType") != "AtomicTag":
             continue
 
-        doc, doc_bound       = _unpack_binding(tag.get("documentation", ""))
-        eu,  eu_bound        = _unpack_binding(tag.get("engUnit", ""))
-        opc, opc_bound       = _unpack_binding(tag.get("opcItemPath", ""))
+        doc, _ = _unpack_binding(tag.get("documentation", ""))
+        eu, _  = _unpack_binding(tag.get("engUnit", ""))
+        opc, _ = _unpack_binding(tag.get("opcItemPath", ""))
         alarm = (tag.get("alarms") or [{}])[0]
 
         rows.append([
             tag.get("name", ""),
-            "TRUE" if doc_bound else "",
             doc,
             tag.get("valueSource", ""),
             tag.get("dataType", ""),
             "" if tag.get("value") is None else tag["value"],
-            "TRUE" if opc_bound else "",
             opc,
-            "TRUE" if eu_bound else "",
             eu,
             tag.get("engHigh", ""),
             tag.get("engLow", ""),
@@ -721,7 +718,7 @@ def build_udt_types(
     Sheet layout — alternating blocks, one UDT per block:
         :UDTName  | Documentation | Param1_Name | ...
         HmiModule | ...           | PLC         | ...
-        :TagName  | DocBinding    | OpcPath     | ...
+        :TagName  | Documentation | OpcPath     | ...
         _S_FAULT  | TRUE          | {PLC}...    | ...
 
     Parameters
@@ -778,29 +775,17 @@ def build_udt_types(
 
             tag.setdefault("valueSource", "memory")
 
+            # Parameter binding: any string field containing {…} is a parameter binding
+            for _, json_key in UDT_TAG_FIELDS.items():
+                stored = tag.get(json_key)
+                if isinstance(stored, str) and "{" in stored and "}" in stored:
+                    tag[json_key] = {"bindType": "parameter", "binding": stored}
+
             # ReadOnly boolean
             if "readonly" in tag_cols:
                 ro = tag_row.get("readonly", "")
                 if ro is True or str(ro).strip().lower() in ("true", "1", "yes"):
                     tag["readOnly"] = True
-
-            # Documentation with optional parameter binding
-            if "docbinding" in tag_cols and "documentation" in tag:
-                doc_bind = tag_row.get("docbinding", "")
-                if doc_bind is True or str(doc_bind).strip().lower() in ("true", "1", "yes"):
-                    tag["documentation"] = {
-                        "bindType": "parameter",
-                        "binding": tag["documentation"],
-                    }
-
-            # EngUnit with optional parameter binding
-            if "engunitbinding" in tag_cols and "engUnit" in tag:
-                eu_bind = tag_row.get("engunitbinding", "")
-                if eu_bind is True or str(eu_bind).strip().lower() in ("true", "1", "yes"):
-                    tag["engUnit"] = {
-                        "bindType": "parameter",
-                        "binding": tag["engUnit"],
-                    }
 
             # Alarm sub-object — only created when alarmname is populated
             alarm_name_val = str(tag_row.get("alarmname", "")).strip()
@@ -828,13 +813,10 @@ def build_udt_types(
             # OPC path with optional parameter binding
             opc = str(tag_row.get("opcpath", "")).strip() if "opcpath" in tag_cols else ""
             if opc and opc.lower() != "nan":
-                opc_binding = tag_row.get("opcpathbinding", "") if "opcpathbinding" in tag_cols else ""
-                use_binding = (
-                    opc_binding is True
-                    or str(opc_binding).strip().lower() in ("true", "1", "yes")
-                )
                 tag["opcItemPath"] = (
-                    {"bindType": "parameter", "binding": opc} if use_binding else opc
+                    {"bindType": "parameter", "binding": opc}
+                    if ("{" in opc and "}" in opc)
+                    else opc
                 )
                 tag["valueSource"] = "opc"
                 tag["opcServer"] = opc_server

@@ -76,14 +76,11 @@ UDT_TAG_FIELDS = {
 #
 #   ReadOnly      — Boolean (true/false/1/0).  Written as a JSON boolean on the tag.
 #
-#   DocBinding    — Boolean.  When true, the Documentation value is written as
-#                   {"bindType": "parameter", "binding": <value>} instead of a
-#                   plain string.  OPCPathBinding does the same for OpcPath.
-#                   EngUnitBinding does the same for EngUnit.
-#                   TODO: consider generalising binding support to other string
-#                   fields (tooltip, etc.) in a future pass.
-#                   TODO: consider generalising binding support to other string
-#                   fields (tooltip, etc.) in a future pass.
+#   Parameter binding — Any string field whose value contains "{" and "}" is
+#                   automatically written as {"bindType": "parameter", "binding": <value>}
+#                   instead of a plain string.  This applies to all UDT_TAG_FIELDS
+#                   string fields (e.g. Documentation, EngUnit) and OPCPath.
+#                   No separate binding-flag column is needed.
 #
 #   Param{N}_Name      — Name of UDT parameter N (N = 1, 2, 3, …).  Read from
 #   Param{N}_DataType    the first tag row of each UDT group and used to build
