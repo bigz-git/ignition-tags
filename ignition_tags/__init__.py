@@ -9,7 +9,12 @@ CLI:
     python -m ignition_tags --help
 """
 
-__version__ = "0.1.0"
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
+
+try:
+    __version__ = _pkg_version("ignition-tags")
+except PackageNotFoundError:
+    __version__ = "unknown"
 
 from .core import build_tag_provider, build_udt_instances, build_udt_types, flatten_tags, flatten_udt_types, split_device_list
 
